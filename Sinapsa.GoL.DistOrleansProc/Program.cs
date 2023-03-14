@@ -1,35 +1,56 @@
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Orleans;
+using System.Runtime;
+using Sinapsa.GoL.DistOrleansProc.Domain.Extensions;
+using Orleans.Hosting;
+using Sinapsa.GoL.DistOrleansProc.GrainInterfaces;
+using Sinapsa.GoL.DistOrleansProc.Grains;
+using Orleans.Configuration;
+
 namespace Sinapsa.GoL.DistOrleansProc
 {
     public class Program
     {
+
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-
-            builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-
-            app.MapControllers();
-
-            app.Run();
+            CreateHostBuilder(args).Build().Run();
         }
+
+        // Additional configuration is required to successfully run gRPC on macOS.
+        // For instructions on how to configure Kestrel and gRPC clients on macOS, visit https://go.microsoft.com/fwlink/?linkid=2099682
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .UseOrleans((context, siloBuilder) =>
+                {
+                    var config = context.Configuration;
+
+                    siloBuilder.ConfigureCluster(config);
+
+                    siloBuilder.ConfigureApplicationParts(parts =>
+                         parts.AddApplicationPart(typeof(GoLChunkGrain).Assembly).WithReferences());
+
+                    siloBuilder.ConfigureMemoryGrainStorage(typeof(GoLChunkGrain).Assembly);
+                })
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder
+                    .ConfigureKestrel((host, options) =>
+                    {
+                        // http port for controllers
+                        options.ListenAnyIP(5001, listenOptions =>
+                        {
+                            listenOptions.Protocols = HttpProtocols.Http1;
+                        });
+                    })
+                    .UseStartup<Startup>();
+
+                }).ConfigureServices(services =>
+                {
+                    services.AddControllers();
+                    // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+                    services.AddEndpointsApiExplorer();
+                    services.AddSwaggerGen();
+                });
     }
 }

@@ -1,5 +1,4 @@
-﻿using Sinapsa.GoL.DistOrleansProc.GrainInterfaces;
-using Sinapsa.GoL.DistOrleansProc.Orleans.Core.Services;
+﻿using Sinapsa.GoL.DistOrleansProc.Domain.Extensions;
 
 namespace Sinapsa.GoL.DistOrleansProc
 {
@@ -18,7 +17,7 @@ namespace Sinapsa.GoL.DistOrleansProc
         {
             services.AddLogging(loggingBuilder => loggingBuilder.AddConsole());
 
-            services.AddSingleton<IGrainFactory<IGoLChunkGrain, string>, GrainFactoryWithStringIdentity<IGoLChunkGrain>>();
+            services.AddGoLDistributedOrleansGrainFactories();
 
             services.AddHealthChecks();
         }
@@ -33,8 +32,19 @@ namespace Sinapsa.GoL.DistOrleansProc
 
             app.UseRouting();
 
+            if (env.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
+            app.UseHttpsRedirection();
+
+            app.UseAuthorization();
+
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapControllers();
                 endpoints.MapHealthChecks("/hc");
             });
         }

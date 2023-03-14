@@ -1,5 +1,6 @@
 ﻿using Orleans;
 using Orleans.Concurrency;
+using Sinapsa.GoL.DistOrleansProc.GrainInterfaces.Models;
 using Sinapsa.GoL.DistOrleansProc.Orleans.Core;
 using System;
 using System.Collections.Generic;
@@ -12,9 +13,11 @@ namespace Sinapsa.GoL.DistOrleansProc.GrainInterfaces
     public interface IGoLChunkGrain : IGrainWithStringKey, IGrain<string>
     {
         [AlwaysInterleave]
-        Task<byte[][]> GetChunk();
+        Task<Cell[,]> GetChunk();
 
-        Task SetChunk(byte[][] value, TimeSpan deactivationDelay = default);
+        void InitChunk(int width, int height, double liveDensity);
+
+        Task SetChunk(Cell[][] value);
 
         Task Advance();
 
