@@ -1,5 +1,6 @@
 ﻿using Orleans;
 using Orleans.Concurrency;
+using Orleans.Providers;
 using Sinapsa.GoL.DistOrleansProc.GrainInterfaces.Models;
 using Sinapsa.GoL.DistOrleansProc.Orleans.Core;
 using System;

@@ -61,7 +61,7 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Services
             {
                 for (int y = 0; y < 32; y++)
                 {
-                    sb.Append(myChunkState[x, y].IsAlive ? "X" : " ");
+                    sb.Append(myChunkState[x, y].IsAlive ? "#" : " ");
                 }
                 sb.AppendLine();
             }

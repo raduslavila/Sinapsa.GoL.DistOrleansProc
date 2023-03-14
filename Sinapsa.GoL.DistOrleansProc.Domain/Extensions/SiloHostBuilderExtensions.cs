@@ -37,11 +37,6 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Extensions
             clusterOptionsBuilder?.Invoke(clusterConfig);
 
 
-
-
-
-
-
             if (clusterConfig.UseDashboard)
             {
                 siloBuilder.UseDashboard(o =>
