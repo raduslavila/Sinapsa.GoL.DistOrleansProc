@@ -25,7 +25,7 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Services
         {
             var chunk = _grainChunkFactory.GetGrain(myChunk);
 
-            chunk.InitChunk(32, 32, 0.15f);
+            chunk.InitRandomChunk(32, 32, 0.15f);
         }
 
         public async Task RunUniverseStep()

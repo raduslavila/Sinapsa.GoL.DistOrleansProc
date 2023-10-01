@@ -1,0 +1,10 @@
+version: '3.4'
+
+services:
+  sinapsa.gol.distorleansproc:
+    image: ${DOCKER_REGISTRY-}sinapsagoldistorleansproc
+    build:
+      context: .
+      dockerfile: Sinapsa.GoL.DistOrleansProc/Dockerfile
+    ports:
+      - 5050:5050

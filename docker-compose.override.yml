@@ -1,0 +1,8 @@
+version: '0.1'
+
+services:
+  sinapsa.gol.distorleansproc:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "5050"

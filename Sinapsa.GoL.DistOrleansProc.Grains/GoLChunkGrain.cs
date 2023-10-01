@@ -72,7 +72,7 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
             }
         }
 
-        public async void InitChunk(int width, int height, double liveDensity)
+        public async void InitRandomChunk(int width, int height, double liveDensity)
         {
             this.State = new GoLChunkGrainState();
 
@@ -114,6 +114,9 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
                     //}
                     //else
                     //{
+
+
+
                     int liveNeighbors = currentState.Cells[w, h].neighbors.Count(x => x.IsAlive);
 
                     if (currentState.Cells[w, h].IsAlive)
@@ -121,6 +124,17 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
                     else
                         currentState.Cells[w, h].IsAliveNext = liveNeighbors == 3;
                     //}
+
+                    //if this gets alive, and is on edge, new chunks should be generated 
+                    bool isLeftEdge = (w == 0);
+                    bool isRightEdge = (w == currentState.Width - 1);
+                    bool isTopEdge = (h == 0);
+                    bool isBottomEdge = (h == currentState.Height - 1);
+
+                    if (currentState.Cells[w, h].IsAliveNext)
+                    {
+
+                    }
                 }
             }
 

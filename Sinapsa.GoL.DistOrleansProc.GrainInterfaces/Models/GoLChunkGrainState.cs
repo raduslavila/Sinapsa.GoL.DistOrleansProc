@@ -9,6 +9,8 @@ namespace Sinapsa.GoL.DistOrleansProc.GrainInterfaces.Models
     public class GoLChunkGrainState
     {
         public string ChunkId { get; set; }
+        public int ChunkLocationX { get; set; }
+        public int ChunkLocationy { get; set; }
 
         public Cell[,] Cells;
         public int Width { get; set; }

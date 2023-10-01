@@ -3,15 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33414.496
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sinapsa.GoL.DistOrleansProc", "Sinapsa.GoL.DistOrleansProc\Sinapsa.GoL.DistOrleansProc.csproj", "{CA36A273-F287-4411-9374-13A3FB22535B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sinapsa.GoL.DistOrleansProc", "Sinapsa.GoL.DistOrleansProc\Sinapsa.GoL.DistOrleansProc.csproj", "{CA36A273-F287-4411-9374-13A3FB22535B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sinapsa.GoL.DistOrleansProc.GrainInterfaces", "Sinapsa.GoL.DistOrleansProc.GrainInterfaces\Sinapsa.GoL.DistOrleansProc.GrainInterfaces.csproj", "{AF552D97-FF59-4C64-B265-1392AE1F430F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sinapsa.GoL.DistOrleansProc.GrainInterfaces", "Sinapsa.GoL.DistOrleansProc.GrainInterfaces\Sinapsa.GoL.DistOrleansProc.GrainInterfaces.csproj", "{AF552D97-FF59-4C64-B265-1392AE1F430F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sinapsa.GoL.DistOrleansProc.Grains", "Sinapsa.GoL.DistOrleansProc.Grains\Sinapsa.GoL.DistOrleansProc.Grains.csproj", "{BDE3BB6A-E525-410A-B2FF-9B4AE176E0EE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sinapsa.GoL.DistOrleansProc.Grains", "Sinapsa.GoL.DistOrleansProc.Grains\Sinapsa.GoL.DistOrleansProc.Grains.csproj", "{BDE3BB6A-E525-410A-B2FF-9B4AE176E0EE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sinapsa.GoL.DistOrleansProc.Domain", "Sinapsa.GoL.DistOrleansProc.Domain\Sinapsa.GoL.DistOrleansProc.Domain.csproj", "{F7C556C3-9A3C-42DD-9EB3-48A8CBD77D86}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sinapsa.GoL.DistOrleansProc.Domain", "Sinapsa.GoL.DistOrleansProc.Domain\Sinapsa.GoL.DistOrleansProc.Domain.csproj", "{F7C556C3-9A3C-42DD-9EB3-48A8CBD77D86}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sinapsa.GoL.DistOrleansProc.Orleans.Core", "Sinapsa.GoL.DistOrleansProc.Orleans.Core\Sinapsa.GoL.DistOrleansProc.Orleans.Core.csproj", "{68F76381-5591-4B40-9B98-4C6004634B15}"
+EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{58D445C6-40D3-412B-9A43-12D6FF21E66C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{68F76381-5591-4B40-9B98-4C6004634B15}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{68F76381-5591-4B40-9B98-4C6004634B15}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{68F76381-5591-4B40-9B98-4C6004634B15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58D445C6-40D3-412B-9A43-12D6FF21E66C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58D445C6-40D3-412B-9A43-12D6FF21E66C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58D445C6-40D3-412B-9A43-12D6FF21E66C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58D445C6-40D3-412B-9A43-12D6FF21E66C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

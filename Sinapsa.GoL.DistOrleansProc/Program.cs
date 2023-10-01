@@ -38,7 +38,7 @@ namespace Sinapsa.GoL.DistOrleansProc
                     .ConfigureKestrel((host, options) =>
                     {
                         // http port for controllers
-                        options.ListenAnyIP(5001, listenOptions =>
+                        options.ListenAnyIP(5050, listenOptions =>
                         {
                             listenOptions.Protocols = HttpProtocols.Http1;
                         });
