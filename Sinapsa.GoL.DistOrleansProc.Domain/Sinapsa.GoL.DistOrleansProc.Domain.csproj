@@ -9,7 +9,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Orleans.Server" />
     <PackageReference Include="Microsoft.Orleans.Dashboard" />
-    <PackageReference Include="Microsoft.Orleans.Hosting.Kubernetes" />
+    <PackageReference Include="Orleans.Clustering.Kubernetes" />
   </ItemGroup>
 
   <ItemGroup>

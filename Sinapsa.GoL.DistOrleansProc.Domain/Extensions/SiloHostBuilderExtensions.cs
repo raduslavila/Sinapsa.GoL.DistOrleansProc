@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Orleans;
+using Orleans.Clustering.Kubernetes;
 using Orleans.Dashboard;
 using Orleans.Configuration;
 using Orleans.Hosting;
@@ -9,6 +10,7 @@ using Orleans.Providers;
 using Orleans.Runtime;
 using Sinapsa.GoL.DistOrleansProc.Domain.Configuration;
 using Sinapsa.GoL.DistOrleansProc.GrainInterfaces;
+using System.Net;
 using System.Reflection;
 
 namespace Sinapsa.GoL.DistOrleansProc.Domain.Extensions
@@ -47,7 +49,27 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Extensions
 
             if (clusterConfig.UseKubernetesHosting)
             {
-                siloBuilder.UseKubernetesHosting();
+                // Use Orleans.Clustering.Kubernetes CRD-based membership table
+                siloBuilder.UseKubeMembership();
+
+                // Configure ClusterOptions from config (bound from env vars or appsettings)
+                siloBuilder.Configure<ClusterOptions>(options =>
+                {
+                    options.ClusterId = clusterConfig.ClusterOptions.ClusterId;
+                    options.ServiceId = clusterConfig.ClusterOptions.ServiceId;
+                });
+
+                // Configure silo/gateway endpoints using the pod IP injected by K8s downward API
+                siloBuilder.Configure<EndpointOptions>(options =>
+                {
+                    var podIp = Environment.GetEnvironmentVariable("POD_IP");
+                    if (!string.IsNullOrEmpty(podIp) && IPAddress.TryParse(podIp, out var ip))
+                    {
+                        options.AdvertisedIPAddress = ip;
+                    }
+                    options.SiloPort    = clusterConfig.ClusterEndpointOptions?.SiloPort    ?? 30000;
+                    options.GatewayPort = clusterConfig.ClusterEndpointOptions?.GatewayPort ?? 11111;
+                });
             }
             else
             {

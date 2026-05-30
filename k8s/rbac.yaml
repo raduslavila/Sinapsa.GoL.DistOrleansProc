@@ -1,0 +1,36 @@
+# ServiceAccount used by the Orleans silo pods
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gol-backend-sa
+  namespace: gol
+---
+# Orleans.Hosting.Kubernetes needs to list/watch/patch pods to maintain the
+# distributed silo membership table via pod annotations.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: gol-backend-role
+  namespace: gol
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "patch"]
+  # Orleans.Clustering.Kubernetes needs full access to its CRDs
+  - apiGroups: ["orleans.dot.net"]
+    resources: ["silos", "clusterversions"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: gol-backend-rolebinding
+  namespace: gol
+subjects:
+  - kind: ServiceAccount
+    name: gol-backend-sa
+    namespace: gol
+roleRef:
+  kind: Role
+  name: gol-backend-role
+  apiGroup: rbac.authorization.k8s.io
