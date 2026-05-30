@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc;
 using Sinapsa.GoL.DistOrleansProc.Domain.Models;
 using Sinapsa.GoL.DistOrleansProc.Domain.Services;
 
@@ -124,6 +123,18 @@ namespace Sinapsa.GoL.DistOrleansProc.Controllers
         {
             var grid = await _goLService.GetUniverseGrid();
             return Ok(grid);
+        }
+
+        /// <summary>
+        /// Get incremental universe updates for a client.
+        /// If the client is more than one generation behind, returns full grid snapshot.
+        /// Otherwise returns delta changes.
+        /// </summary>
+        [HttpGet("grid/update")]
+        public async Task<ActionResult<UniverseGridUpdateDto>> GetGridUpdate([FromQuery] int lastSeenGeneration = -1)
+        {
+            var update = await _goLService.GetUniverseUpdate(lastSeenGeneration);
+            return Ok(update);
         }
     }
 }

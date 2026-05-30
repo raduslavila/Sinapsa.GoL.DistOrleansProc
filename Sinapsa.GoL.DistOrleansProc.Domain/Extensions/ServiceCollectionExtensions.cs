@@ -22,6 +22,7 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Extensions
 
             services.AddSingleton<IGrainFactory<IGoLChunkGrain, string>, GrainFactoryWithStringIdentity<IGoLChunkGrain>>();
 
+            services.AddSingleton<IUniverseGridDeltaService, UniverseGridDeltaService>();
             services.AddSingleton<IGoLService, GoLService>();
 
             return services;

@@ -11,5 +11,6 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Services
         Task RunUniverseStep();
         Task<string> DisplayUniverseState();
         Task<GridStateDto> GetUniverseGrid();
+        Task<UniverseGridUpdateDto> GetUniverseUpdate(int lastSeenGeneration);
     }
 }

@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import './App.css';
 import GameOfLifeGrid from './components/GameOfLifeGrid';
 import ControlPanel from './components/ControlPanel';
-import { initUniverse, reinitUniverse, runStep, getGrid } from './services/api';
+import { getGridUpdate, initUniverse, reinitUniverse, runStep, UniverseGridUpdateDto } from './services/api';
 
 interface UniverseConfig {
   chunksX: number;
@@ -23,15 +23,49 @@ function App() {
     liveDensity: 0.15
   });
   const [autoRunInterval, setAutoRunInterval] = useState<number>(100);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const autoRunTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const generationRef = useRef(0);
+  const isStepInFlightRef = useRef(false);
+
+  const applyUpdate = useCallback((update: UniverseGridUpdateDto) => {
+    if (update.isFullGrid || !grid.length || update.grid) {
+      if (update.grid?.cells) {
+        setGrid(update.grid.cells);
+      }
+      setGeneration(update.currentGeneration);
+      return;
+    }
+
+    if (update.deltas.length > 0) {
+      setGrid(prev => {
+        const next = prev.map(column => [...column]);
+        for (const delta of update.deltas) {
+          if (next[delta.x] && next[delta.x][delta.y] !== undefined) {
+            next[delta.x][delta.y] = delta.isAlive;
+          }
+        }
+        return next;
+      });
+    }
+
+    setGeneration(update.currentGeneration);
+  }, [grid.length]);
+
+  useEffect(() => {
+    generationRef.current = generation;
+  }, [generation]);
+
+  const clearAutoRunTimeout = useCallback(() => {
+    if (autoRunTimeoutRef.current) {
+      clearTimeout(autoRunTimeoutRef.current);
+      autoRunTimeoutRef.current = null;
+    }
+  }, []);
 
   const stopAutoRun = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
+    clearAutoRunTimeout();
     setIsRunning(false);
-  }, []);
+  }, [clearAutoRunTimeout]);
 
   const handleInit = async () => {
     try {
@@ -39,10 +73,9 @@ function App() {
       stopAutoRun();
 
       await initUniverse(config.chunksX, config.chunksY, config.chunkSize, config.liveDensity);
-      const gridData = await getGrid();
-      setGrid(gridData);
+      const update = await getGridUpdate(-1);
+      applyUpdate(update);
       setIsInitialized(true);
-      setGeneration(0);
     } catch (error) {
       console.error('Failed to initialize universe:', error);
       alert('Failed to initialize universe. Make sure the API is running on http://localhost:5050');
@@ -55,10 +88,9 @@ function App() {
       stopAutoRun();
 
       await reinitUniverse(config.chunksX, config.chunksY, config.chunkSize, config.liveDensity);
-      const gridData = await getGrid();
-      setGrid(gridData);
+      const update = await getGridUpdate(-1);
+      applyUpdate(update);
       setIsInitialized(true);
-      setGeneration(0);
     } catch (error) {
       console.error('Failed to re-initialize universe:', error);
       alert('Failed to re-initialize universe. Make sure the API is running on http://localhost:5050');
@@ -66,39 +98,51 @@ function App() {
   };
 
   const handleStep = useCallback(async () => {
+    if (isStepInFlightRef.current) {
+      return;
+    }
+
+    isStepInFlightRef.current = true;
+
     try {
       await runStep();
-      const gridData = await getGrid();
-      setGrid(gridData);
-      setGeneration(prev => prev + 1);
+      const update = await getGridUpdate(generationRef.current);
+      applyUpdate(update);
     } catch (error) {
       console.error('Failed to run step:', error);
+      stopAutoRun();
+    } finally {
+      isStepInFlightRef.current = false;
     }
-  }, []);
+  }, [applyUpdate, stopAutoRun]);
 
   const handleAutoRun = () => {
     if (isRunning) {
       stopAutoRun();
     } else {
       setIsRunning(true);
-      intervalRef.current = setInterval(handleStep, autoRunInterval);
     }
   };
 
   useEffect(() => {
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      clearAutoRunTimeout();
     };
-  }, []);
+  }, [clearAutoRunTimeout]);
 
   useEffect(() => {
-    if (isRunning && intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = setInterval(handleStep, autoRunInterval);
+    clearAutoRunTimeout();
+
+    if (!isRunning || !isInitialized || isStepInFlightRef.current) {
+      return;
     }
-  }, [autoRunInterval, isRunning, handleStep]);
+
+    autoRunTimeoutRef.current = setTimeout(() => {
+      void handleStep();
+    }, autoRunInterval);
+
+    return clearAutoRunTimeout;
+  }, [autoRunInterval, clearAutoRunTimeout, generation, handleStep, isInitialized, isRunning]);
 
   return (
     <div className="App">
