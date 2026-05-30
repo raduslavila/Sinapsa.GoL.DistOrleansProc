@@ -16,12 +16,43 @@ namespace Sinapsa.GoL.DistOrleansProc.GrainInterfaces
         [AlwaysInterleave]
         Task<Cell[,]> GetChunk();
 
-        void InitRandomChunk(int width, int height, double liveDensity);
+        Task InitChunk(int chunkX, int chunkY, int width, int height, double liveDensity);
 
         Task SetChunk(Cell[][] value);
 
         Task Advance();
 
         Task Clear();
+
+        // Methods for inter-chunk communication
+        [AlwaysInterleave]
+        Task<bool[]> GetTopEdge();
+
+        [AlwaysInterleave]
+        Task<bool[]> GetBottomEdge();
+
+        [AlwaysInterleave]
+        Task<bool[]> GetLeftEdge();
+
+        [AlwaysInterleave]
+        Task<bool[]> GetRightEdge();
+
+        [AlwaysInterleave]
+        Task<bool> GetTopLeftCorner();
+
+        [AlwaysInterleave]
+        Task<bool> GetTopRightCorner();
+
+        [AlwaysInterleave]
+        Task<bool> GetBottomLeftCorner();
+
+        [AlwaysInterleave]
+        Task<bool> GetBottomRightCorner();
+
+        Task SetNeighborChunks(
+            string topChunkId, string bottomChunkId,
+            string leftChunkId, string rightChunkId,
+            string topLeftChunkId, string topRightChunkId,
+            string bottomLeftChunkId, string bottomRightChunkId);
     }
 }

@@ -9,10 +9,19 @@
     <DockerServiceName>sinapsa.gol.distorleansproc</DockerServiceName>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="ARCHITECTURE.md" />
+    <None Include="BEFORE_AFTER.md" />
+    <None Include="CHANGED_CELLS_TRACKING.md" />
+    <None Include="DISTRIBUTED_CHUNKS.md" />
     <None Include="docker-compose.override.yml">
       <DependentUpon>docker-compose.yml</DependentUpon>
     </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
+    <None Include="DONE.md" />
+    <None Include="IMPLEMENTATION_SUMMARY.md" />
+    <None Include="MIGRATION_LEGACY_REMOVED.md" />
+    <None Include="QUICKSTART_DISTRIBUTED.md" />
+    <None Include="VISUAL_GUIDE.md" />
   </ItemGroup>
 </Project>
