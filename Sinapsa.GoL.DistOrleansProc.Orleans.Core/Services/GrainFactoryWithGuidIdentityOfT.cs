@@ -17,10 +17,5 @@ namespace Sinapsa.GoL.DistOrleansProc.Orleans.Core.Services
         {
             return _grainFactory.GetGrain<TGrain>(grainIdentity);
         }
-
-        public Guid GetIdentity(IGrainIdentity grainIdentity)
-        {
-            return grainIdentity.PrimaryKey;
-        }
     }
 }

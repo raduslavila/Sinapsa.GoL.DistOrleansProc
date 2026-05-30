@@ -1,4 +1,6 @@
-﻿using Sinapsa.GoL.DistOrleansProc.Domain.Extensions;
+﻿using Orleans.Dashboard;
+using Sinapsa.GoL.DistOrleansProc.Domain.Configuration;
+using Sinapsa.GoL.DistOrleansProc.Domain.Extensions;
 
 namespace Sinapsa.GoL.DistOrleansProc
 {
@@ -49,6 +51,14 @@ namespace Sinapsa.GoL.DistOrleansProc
             {
                 endpoints.MapControllers();
                 endpoints.MapHealthChecks("/hc");
+
+                var clusterConfig = new ClusterConfig();
+                Configuration.GetSection(nameof(ClusterConfig)).Bind(clusterConfig);
+                if (clusterConfig.UseDashboard)
+                {
+                    var routePrefix = "/" + (clusterConfig.DashboardPath ?? "dashboard").Trim('/');
+                    endpoints.MapOrleansDashboard(routePrefix);
+                }
             });
         }
     }
