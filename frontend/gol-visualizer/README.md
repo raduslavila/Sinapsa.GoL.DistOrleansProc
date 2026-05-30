@@ -1,4 +1,50 @@
-# Game of Life - React Visualizer
+# Game of Life â€” React Visualizer
+
+React 19 + TypeScript frontend for Conway's Game of Life running on a distributed Orleans backend.
+
+## Features
+
+- Real-time grid visualization with incremental delta updates (`GET /api/grid/update`)
+- Visual chunk boundary overlay (configurable)
+- Configurable universe: chunks X/Y, chunk size (8â€“128 cells), live density
+- Auto-run with variable speed; single-step mode; pause/resume
+- Live statistics: generation count, grid dimensions, living cell count
+
+## Development
+
+```bash
+# Requires .NET backend running on http://localhost:5050
+cd frontend/gol-visualizer
+npm install
+npm start      # http://localhost:3000
+```
+
+The API base URL is configured via `REACT_APP_API_URL` (defaults to `http://localhost:5050/api`).
+
+## Production (Kubernetes)
+
+The frontend is built into a Docker image with an nginx server. The nginx config proxies `/api/` to the backend service and serves the React SPA.
+
+```bash
+# Build
+docker build -t gol-frontend:local .
+
+# Deploy via the root deploy script
+cd ../..
+.\deploy-kind.ps1
+# Frontend: http://localhost:30000
+```
+
+## API Calls
+
+| Call | Endpoint |
+|------|----------|
+| Initialize | `POST /api/init?chunksX=&chunksY=&chunkSize=&liveDensity=` |
+| Re-initialize | `POST /api/reinit?chunksX=&chunksY=&chunkSize=&liveDensity=` |
+| Step | `POST /api/step` |
+| Full grid | `GET /api/grid` |
+| Delta update | `GET /api/grid/update?lastSeenGeneration=N` |
+
 
 A React + TypeScript frontend for visualizing Conway's Game of Life running on a distributed Orleans backend.
 
@@ -100,25 +146,25 @@ frontend/gol-visualizer/
 - Chunks X: 2
 - Chunks Y: 2
 - Chunk Size: 16
-- Total: 32×32 = 1,024 cells
+- Total: 32ï¿½32 = 1,024 cells
 
 ### Medium Grid (Recommended)
 - Chunks X: 2
 - Chunks Y: 2
 - Chunk Size: 32
-- Total: 64×64 = 4,096 cells
+- Total: 64ï¿½64 = 4,096 cells
 
 ### Large Grid (Performance Test)
 - Chunks X: 4
 - Chunks Y: 4
 - Chunk Size: 50
-- Total: 200×200 = 40,000 cells
+- Total: 200ï¿½200 = 40,000 cells
 
 ### Massive Grid (Stress Test)
 - Chunks X: 10
 - Chunks Y: 10
 - Chunk Size: 64
-- Total: 640×640 = 409,600 cells
+- Total: 640ï¿½640 = 409,600 cells
 
 ## Features Explained
 
@@ -142,7 +188,7 @@ frontend/gol-visualizer/
 ## Performance Notes
 
 - Cell size automatically adjusts based on grid dimensions
-- Larger grids (>100×100) may have smaller cells to fit the viewport
+- Larger grids (>100ï¿½100) may have smaller cells to fit the viewport
 - Auto-run speed may be limited by:
   - Backend processing time
   - Network latency

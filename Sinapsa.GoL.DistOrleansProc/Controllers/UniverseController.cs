@@ -89,29 +89,15 @@ namespace Sinapsa.GoL.DistOrleansProc.Controllers
         }
 
         /// <summary>
-        /// Advance the distributed universe by one generation
-        /// All chunks will process their cells in parallel and communicate edge states
+        /// Advance the distributed universe by one generation.
+        /// All chunk grains process their cells in parallel and exchange edge states.
         /// </summary>
         [HttpPost("step")]
-        public async Task<ActionResult<string>> RunStep()
+        public async Task<IActionResult> RunStep()
         {
             _logger.LogInformation("Running distributed universe step");
-
             await _goLService.RunUniverseStep();
-
-            var state = await _goLService.DisplayUniverseState();
-
-            return Ok(state);
-        }
-
-        /// <summary>
-        /// Get the current state of the entire distributed universe
-        /// </summary>
-        [HttpGet("state")]
-        public async Task<ActionResult<string>> GetState()
-        {
-            var state = await _goLService.DisplayUniverseState();
-            return Ok(state);
+            return Ok();
         }
 
         /// <summary>

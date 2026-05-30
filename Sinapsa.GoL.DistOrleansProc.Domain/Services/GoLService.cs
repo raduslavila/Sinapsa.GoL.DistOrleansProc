@@ -30,19 +30,6 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Services
 
         public Task RunUniverseStep() => Universe.StepUniverse();
 
-        public async Task<string> DisplayUniverseState()
-        {
-            var state = await Universe.GetState();
-            var sb = new StringBuilder();
-            for (int y = 0; y < state.Height; y++)
-            {
-                for (int x = 0; x < state.Width; x++)
-                    sb.Append(state.Cells[x][y] ? "#" : " ");
-                sb.AppendLine();
-            }
-            return sb.ToString();
-        }
-
         public async Task<GridStateDto> GetUniverseGrid()
         {
             var state = await Universe.GetState();

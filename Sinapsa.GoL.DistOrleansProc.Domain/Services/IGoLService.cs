@@ -9,7 +9,6 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Services
         Task InitUniverse(int chunksX, int chunksY, int chunkSize, double liveDensity);
         Task ClearAndReinitUniverse(int chunksX, int chunksY, int chunkSize, double liveDensity);
         Task RunUniverseStep();
-        Task<string> DisplayUniverseState();
         Task<GridStateDto> GetUniverseGrid();
         Task<UniverseGridUpdateDto> GetUniverseUpdate(int lastSeenGeneration);
     }
