@@ -1,6 +1,6 @@
 ﻿using Orleans;
-using Orleans;
 using Orleans.Providers;
+using Orleans.Placement;
 using Sinapsa.GoL.DistOrleansProc.GrainInterfaces;
 using Sinapsa.GoL.DistOrleansProc.GrainInterfaces.Models;
 using System.Diagnostics;
@@ -10,6 +10,7 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
     // TODO: Add Redis persistence support for distributed state management
     // Consider using [StorageProvider(ProviderName = "RedisGrainStorage")] when migrating to Redis
     [StorageProvider(ProviderName = "ChunkMemory")]
+    [ActivationCountBasedPlacement]
     public class GoLChunkGrain : Grain<GoLChunkGrainState>, IGoLChunkGrain
     {
         private Random rand = new Random();
