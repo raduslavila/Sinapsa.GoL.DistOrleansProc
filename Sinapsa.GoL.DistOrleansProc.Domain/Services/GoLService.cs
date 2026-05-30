@@ -19,20 +19,18 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Services
         // Configuration for distributed universe
         private int _chunksX;
         private int _chunksY;
-        private int _chunkWidth;
-        private int _chunkHeight;
+        private int _chunkSize;
 
         public GoLService(IGrainFactory<IGoLChunkGrain, string> grainChunkFactory)
         {
             _grainChunkFactory = grainChunkFactory;
         }
 
-        public async Task InitUniverse(int chunksX, int chunksY, int chunkWidth, int chunkHeight, double liveDensity)
+        public async Task InitUniverse(int chunksX, int chunksY, int chunkSize, double liveDensity)
         {
             _chunksX = chunksX;
             _chunksY = chunksY;
-            _chunkWidth = chunkWidth;
-            _chunkHeight = chunkHeight;
+            _chunkSize = chunkSize;
 
             // Initialize all chunks
             var initTasks = new List<Task>();
@@ -43,7 +41,7 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Services
                 {
                     var chunkId = GetChunkId(x, y);
                     var chunk = _grainChunkFactory.GetGrain(chunkId);
-                    initTasks.Add(chunk.InitChunk(x, y, chunkWidth, chunkHeight, liveDensity));
+                    initTasks.Add(chunk.InitChunk(x, y, chunkSize, liveDensity));
                 }
             }
 
@@ -93,11 +91,11 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Services
             // Build the complete universe display
             for (int cy = 0; cy < _chunksY; cy++)
             {
-                for (int y = 0; y < _chunkHeight; y++)
+                for (int y = 0; y < _chunkSize; y++)
                 {
                     for (int cx = 0; cx < _chunksX; cx++)
                     {
-                        for (int x = 0; x < _chunkWidth; x++)
+                        for (int x = 0; x < _chunkSize; x++)
                         {
                             sb.Append(chunkStates[cx, cy][x, y].IsAlive ? "#" : " ");
                         }

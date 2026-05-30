@@ -4,7 +4,7 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Services
 {
     public interface IGoLService
     {
-        Task InitUniverse(int chunksX, int chunksY, int chunkWidth, int chunkHeight, double liveDensity);
+        Task InitUniverse(int chunksX, int chunksY, int chunkSize, double liveDensity);
         Task RunUniverseStep();
         Task<string> DisplayUniverseState();
     }

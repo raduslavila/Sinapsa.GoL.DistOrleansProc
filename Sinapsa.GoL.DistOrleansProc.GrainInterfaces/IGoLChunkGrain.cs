@@ -16,7 +16,7 @@ namespace Sinapsa.GoL.DistOrleansProc.GrainInterfaces
         [AlwaysInterleave]
         Task<Cell[,]> GetChunk();
 
-        Task InitChunk(int chunkX, int chunkY, int width, int height, double liveDensity);
+        Task InitChunk(int chunkX, int chunkY, int size, double liveDensity);
 
         Task SetChunk(Cell[][] value);
 

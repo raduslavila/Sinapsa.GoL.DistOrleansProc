@@ -18,20 +18,16 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
         {
             var currentState = this.State;
 
-            for (int x = 0; x < currentState.Width; x++)
+            for (int x = 0; x < currentState.Size; x++)
             {
                 rand = new Random();
 
-                for (int y = 0; y < currentState.Height; y++)
+                for (int y = 0; y < currentState.Size; y++)
                 {
                     bool isLeftEdge = (x == 0);
-                    bool isRightEdge = (x == currentState.Width - 1);
+                    bool isRightEdge = (x == currentState.Size - 1);
                     bool isTopEdge = (y == 0);
-                    bool isBottomEdge = (y == currentState.Height - 1);
-                    //bool isEdge = isLeftEdge | isRightEdge | isTopEdge | isBottomEdge;
-
-                    //if (isEdge)
-                    //    continue;
+                    bool isBottomEdge = (y == currentState.Size - 1);
 
                     int xL = x - 1;
                     int xR = x + 1;
@@ -74,20 +70,19 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
             }
         }
 
-        public async Task InitChunk(int chunkX, int chunkY, int width, int height, double liveDensity)
+        public async Task InitChunk(int chunkX, int chunkY, int size, double liveDensity)
         {
             this.State = new GoLChunkGrainState
             {
                 ChunkId = this.GetPrimaryKeyString(),
                 ChunkLocationX = chunkX,
-                ChunkLocationy = chunkY,
-                Width = width,
-                Height = height,
-                Cells = new Cell[width, height]
+                ChunkLocationY = chunkY,
+                Size = size,
+                Cells = new Cell[size, size]
             };
 
-            for (int x = 0; x < this.State.Width; x++)
-                for (int y = 0; y < this.State.Height; y++)
+            for (int x = 0; x < this.State.Size; x++)
+                for (int y = 0; y < this.State.Size; y++)
                     this.State.Cells[x, y] = new Cell();
 
             foreach (var cell in this.State.Cells)
@@ -106,14 +101,14 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
             // Fetch neighbor edge data for cross-chunk boundary cells
             var neighborEdges = await FetchNeighborEdges();
 
-            for (int w = 0; w < State.Width; w++)
+            for (int w = 0; w < State.Size; w++)
             {
-                for (int h = 0; h < State.Height; h++)
+                for (int h = 0; h < State.Size; h++)
                 {
                     bool isLeftEdge = (w == 0);
-                    bool isRightEdge = (w == State.Width - 1);
+                    bool isRightEdge = (w == State.Size - 1);
                     bool isTopEdge = (h == 0);
-                    bool isBottomEdge = (h == State.Height - 1);
+                    bool isBottomEdge = (h == State.Size - 1);
 
                     // Count neighbors within this chunk
                     int liveNeighbors = State.Cells[w, h].neighbors.Count(x => x.IsAlive);
@@ -130,8 +125,8 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
             }
 
             // Capture changed cells (diff between IsAliveNext and IsAlive)
-            var changedCells = Enumerable.Range(0, State.Width)
-                .SelectMany(w => Enumerable.Range(0, State.Height)
+            var changedCells = Enumerable.Range(0, State.Size)
+                .SelectMany(w => Enumerable.Range(0, State.Size)
                     .Where(h => State.Cells[w, h].IsAlive != State.Cells[w, h].IsAliveNext)
                     .Select(h => new
                     {
@@ -144,9 +139,9 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
                 .ToList();
 
             // Update all cells to their next state
-            for (int w = 0; w < State.Width; w++)
+            for (int w = 0; w < State.Size; w++)
             {
-                for (int h = 0; h < State.Height; h++)
+                for (int h = 0; h < State.Size; h++)
                 {
                     State.Cells[w, h].IsAlive = State.Cells[w, h].IsAliveNext;
                 }
@@ -198,8 +193,8 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
         public async Task<bool[]> GetTopEdge()
         {
             await ReadStateAsync();
-            var edge = new bool[State.Width];
-            for (int x = 0; x < State.Width; x++)
+            var edge = new bool[State.Size];
+            for (int x = 0; x < State.Size; x++)
             {
                 edge[x] = State.Cells[x, 0].IsAlive;
             }
@@ -209,10 +204,10 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
         public async Task<bool[]> GetBottomEdge()
         {
             await ReadStateAsync();
-            var edge = new bool[State.Width];
-            for (int x = 0; x < State.Width; x++)
+            var edge = new bool[State.Size];
+            for (int x = 0; x < State.Size; x++)
             {
-                edge[x] = State.Cells[x, State.Height - 1].IsAlive;
+                edge[x] = State.Cells[x, State.Size - 1].IsAlive;
             }
             return edge;
         }
@@ -220,8 +215,8 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
         public async Task<bool[]> GetLeftEdge()
         {
             await ReadStateAsync();
-            var edge = new bool[State.Height];
-            for (int y = 0; y < State.Height; y++)
+            var edge = new bool[State.Size];
+            for (int y = 0; y < State.Size; y++)
             {
                 edge[y] = State.Cells[0, y].IsAlive;
             }
@@ -231,10 +226,10 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
         public async Task<bool[]> GetRightEdge()
         {
             await ReadStateAsync();
-            var edge = new bool[State.Height];
-            for (int y = 0; y < State.Height; y++)
+            var edge = new bool[State.Size];
+            for (int y = 0; y < State.Size; y++)
             {
-                edge[y] = State.Cells[State.Width - 1, y].IsAlive;
+                edge[y] = State.Cells[State.Size - 1, y].IsAlive;
             }
             return edge;
         }
@@ -248,19 +243,19 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
         public async Task<bool> GetTopRightCorner()
         {
             await ReadStateAsync();
-            return State.Cells[State.Width - 1, 0].IsAlive;
+            return State.Cells[State.Size - 1, 0].IsAlive;
         }
 
         public async Task<bool> GetBottomLeftCorner()
         {
             await ReadStateAsync();
-            return State.Cells[0, State.Height - 1].IsAlive;
+            return State.Cells[0, State.Size - 1].IsAlive;
         }
 
         public async Task<bool> GetBottomRightCorner()
         {
             await ReadStateAsync();
-            return State.Cells[State.Width - 1, State.Height - 1].IsAlive;
+            return State.Cells[State.Size - 1, State.Size - 1].IsAlive;
         }
 
         #endregion

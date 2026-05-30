@@ -22,22 +22,20 @@ namespace Sinapsa.GoL.DistOrleansProc.Controllers
         /// </summary>
         /// <param name="chunksX">Number of chunks horizontally (default: 2)</param>
         /// <param name="chunksY">Number of chunks vertically (default: 2)</param>
-        /// <param name="chunkWidth">Width of each chunk (default: 32)</param>
-        /// <param name="chunkHeight">Height of each chunk (default: 32)</param>
+        /// <param name="chunkSize">Size of each square chunk (default: 32 = 32x32)</param>
         /// <param name="liveDensity">Initial percentage of live cells (default: 0.15)</param>
         [HttpPost("init")]
         public async Task<IActionResult> InitUniverse(
             [FromQuery] int chunksX = 2,
             [FromQuery] int chunksY = 2,
-            [FromQuery] int chunkWidth = 32,
-            [FromQuery] int chunkHeight = 32,
+            [FromQuery] int chunkSize = 32,
             [FromQuery] double liveDensity = 0.15)
         {
             _logger.LogInformation(
-                "Initializing distributed universe: {ChunksX}x{ChunksY} chunks, each {ChunkWidth}x{ChunkHeight} cells",
-                chunksX, chunksY, chunkWidth, chunkHeight);
+                "Initializing distributed universe: {ChunksX}x{ChunksY} chunks, each {ChunkSize}x{ChunkSize} cells",
+                chunksX, chunksY, chunkSize, chunkSize);
 
-            await _goLService.InitUniverse(chunksX, chunksY, chunkWidth, chunkHeight, liveDensity);
+            await _goLService.InitUniverse(chunksX, chunksY, chunkSize, liveDensity);
 
             return Ok(new
             {
@@ -46,10 +44,10 @@ namespace Sinapsa.GoL.DistOrleansProc.Controllers
                 {
                     chunksX,
                     chunksY,
-                    chunkWidth,
-                    chunkHeight,
-                    totalWidth = chunksX * chunkWidth,
-                    totalHeight = chunksY * chunkHeight,
+                    chunkSize,
+                    totalWidth = chunksX * chunkSize,
+                    totalHeight = chunksY * chunkSize,
+                    totalCells = chunksX * chunkSize * chunksY * chunkSize,
                     totalChunks = chunksX * chunksY,
                     liveDensity
                 }

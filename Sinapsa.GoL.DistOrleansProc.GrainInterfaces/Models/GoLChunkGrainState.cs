@@ -10,11 +10,10 @@ namespace Sinapsa.GoL.DistOrleansProc.GrainInterfaces.Models
     {
         public string? ChunkId { get; set; }
         public int ChunkLocationX { get; set; }
-        public int ChunkLocationy { get; set; }
+        public int ChunkLocationY { get; set; }
 
         public Cell[,]? Cells;
-        public int Width { get; set; }
-        public int Height { get; set; }
+        public int Size { get; set; } // Chunks are always square (Size x Size)
 
         // Neighbor chunk identifiers for inter-chunk communication
         public string? TopChunkId { get; set; }
