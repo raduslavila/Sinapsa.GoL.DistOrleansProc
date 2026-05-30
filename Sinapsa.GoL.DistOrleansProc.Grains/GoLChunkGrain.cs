@@ -103,54 +103,52 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
         {
             await ReadStateAsync();
 
-            var currentState = this.State;
-
             // Fetch neighbor edge data for cross-chunk boundary cells
             var neighborEdges = await FetchNeighborEdges();
 
-            for (int w = 0; w < currentState.Width; w++)
+            for (int w = 0; w < State.Width; w++)
             {
-                for (int h = 0; h < currentState.Height; h++)
+                for (int h = 0; h < State.Height; h++)
                 {
                     bool isLeftEdge = (w == 0);
-                    bool isRightEdge = (w == currentState.Width - 1);
+                    bool isRightEdge = (w == State.Width - 1);
                     bool isTopEdge = (h == 0);
-                    bool isBottomEdge = (h == currentState.Height - 1);
+                    bool isBottomEdge = (h == State.Height - 1);
 
                     // Count neighbors within this chunk
-                    int liveNeighbors = currentState.Cells[w, h].neighbors.Count(x => x.IsAlive);
+                    int liveNeighbors = State.Cells[w, h].neighbors.Count(x => x.IsAlive);
 
                     // Add cross-chunk neighbors if on edge
                     liveNeighbors += CountCrossChunkNeighbors(w, h, isLeftEdge, isRightEdge, isTopEdge, isBottomEdge, neighborEdges);
 
                     // Apply Conway's Game of Life rules
-                    if (currentState.Cells[w, h].IsAlive)
-                        currentState.Cells[w, h].IsAliveNext = liveNeighbors == 2 || liveNeighbors == 3;
+                    if (State.Cells[w, h].IsAlive)
+                        State.Cells[w, h].IsAliveNext = liveNeighbors == 2 || liveNeighbors == 3;
                     else
-                        currentState.Cells[w, h].IsAliveNext = liveNeighbors == 3;
+                        State.Cells[w, h].IsAliveNext = liveNeighbors == 3;
                 }
             }
 
             // Capture changed cells (diff between IsAliveNext and IsAlive)
-            var changedCells = Enumerable.Range(0, currentState.Width)
-                .SelectMany(w => Enumerable.Range(0, currentState.Height)
-                    .Where(h => currentState.Cells[w, h].IsAlive != currentState.Cells[w, h].IsAliveNext)
+            var changedCells = Enumerable.Range(0, State.Width)
+                .SelectMany(w => Enumerable.Range(0, State.Height)
+                    .Where(h => State.Cells[w, h].IsAlive != State.Cells[w, h].IsAliveNext)
                     .Select(h => new
                     {
                         X = w,
                         Y = h,
-                        WasAlive = currentState.Cells[w, h].IsAlive,
-                        WillBeAlive = currentState.Cells[w, h].IsAliveNext,
-                        Change = currentState.Cells[w, h].IsAliveNext ? "Born" : "Died"
+                        WasAlive = State.Cells[w, h].IsAlive,
+                        WillBeAlive = State.Cells[w, h].IsAliveNext,
+                        Change = State.Cells[w, h].IsAliveNext ? "Born" : "Died"
                     }))
                 .ToList();
 
             // Update all cells to their next state
-            for (int w = 0; w < currentState.Width; w++)
+            for (int w = 0; w < State.Width; w++)
             {
-                for (int h = 0; h < currentState.Height; h++)
+                for (int h = 0; h < State.Height; h++)
                 {
-                    currentState.Cells[w, h].IsAlive = currentState.Cells[w, h].IsAliveNext;
+                    State.Cells[w, h].IsAlive = State.Cells[w, h].IsAliveNext;
                 }
             }
 
