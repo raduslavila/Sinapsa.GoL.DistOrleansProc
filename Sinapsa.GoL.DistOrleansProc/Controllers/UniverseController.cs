@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc;
+using Sinapsa.GoL.DistOrleansProc.Domain.Models;
 using Sinapsa.GoL.DistOrleansProc.Domain.Services;
 
 namespace Sinapsa.GoL.DistOrleansProc.Controllers
@@ -55,6 +56,40 @@ namespace Sinapsa.GoL.DistOrleansProc.Controllers
         }
 
         /// <summary>
+        /// Clear and re-initialize the universe with new configuration or same configuration with new random state
+        /// Reuses existing grains if configuration hasn't changed
+        /// </summary>
+        [HttpPost("reinit")]
+        public async Task<IActionResult> ReinitUniverse(
+            [FromQuery] int chunksX = 2,
+            [FromQuery] int chunksY = 2,
+            [FromQuery] int chunkSize = 32,
+            [FromQuery] double liveDensity = 0.15)
+        {
+            _logger.LogInformation(
+                "Re-initializing universe: {ChunksX}x{ChunksY} chunks, each {ChunkSize}x{ChunkSize} cells",
+                chunksX, chunksY, chunkSize, chunkSize);
+
+            await _goLService.ClearAndReinitUniverse(chunksX, chunksY, chunkSize, liveDensity);
+
+            return Ok(new
+            {
+                message = "Universe re-initialized",
+                configuration = new
+                {
+                    chunksX,
+                    chunksY,
+                    chunkSize,
+                    totalWidth = chunksX * chunkSize,
+                    totalHeight = chunksY * chunkSize,
+                    totalCells = chunksX * chunkSize * chunksY * chunkSize,
+                    totalChunks = chunksX * chunksY,
+                    liveDensity
+                }
+            });
+        }
+
+        /// <summary>
         /// Advance the distributed universe by one generation
         /// All chunks will process their cells in parallel and communicate edge states
         /// </summary>
@@ -78,6 +113,17 @@ namespace Sinapsa.GoL.DistOrleansProc.Controllers
         {
             var state = await _goLService.DisplayUniverseState();
             return Ok(state);
+        }
+
+        /// <summary>
+        /// Get the current state of the universe as a structured grid (for frontend visualization)
+        /// Returns a GridStateDto with width, height, and a 2D jagged array of cells
+        /// </summary>
+        [HttpGet("grid")]
+        public async Task<ActionResult<GridStateDto>> GetGrid()
+        {
+            var grid = await _goLService.GetUniverseGrid();
+            return Ok(grid);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Sinapsa.GoL.DistOrleansProc.Domain.Models;
 using Sinapsa.GoL.DistOrleansProc.GrainInterfaces;
 using Sinapsa.GoL.DistOrleansProc.GrainInterfaces.Models;
 using Sinapsa.GoL.DistOrleansProc.Orleans.Core.Services;
@@ -49,6 +50,50 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Services
 
             // Set up neighbor relationships
             await ConfigureChunkNeighbors();
+        }
+
+        public async Task ClearAndReinitUniverse(int chunksX, int chunksY, int chunkSize, double liveDensity)
+        {
+            // Check if we're changing the grid configuration
+            bool configChanged = _chunksX != chunksX || _chunksY != chunksY || _chunkSize != chunkSize;
+
+            if (configChanged)
+            {
+                // Configuration changed, need full re-initialization
+                await InitUniverse(chunksX, chunksY, chunkSize, liveDensity);
+            }
+            else
+            {
+                // Same configuration, just clear and repopulate existing grains
+                var clearTasks = new List<Task>();
+
+                for (int x = 0; x < _chunksX; x++)
+                {
+                    for (int y = 0; y < _chunksY; y++)
+                    {
+                        var chunkId = GetChunkId(x, y);
+                        var chunk = _grainChunkFactory.GetGrain(chunkId);
+                        clearTasks.Add(chunk.Clear());
+                    }
+                }
+
+                await Task.WhenAll(clearTasks);
+
+                // Re-initialize with new random state
+                var reinitTasks = new List<Task>();
+
+                for (int x = 0; x < _chunksX; x++)
+                {
+                    for (int y = 0; y < _chunksY; y++)
+                    {
+                        var chunkId = GetChunkId(x, y);
+                        var chunk = _grainChunkFactory.GetGrain(chunkId);
+                        reinitTasks.Add(chunk.InitChunk(x, y, chunkSize, liveDensity));
+                    }
+                }
+
+                await Task.WhenAll(reinitTasks);
+            }
         }
 
         public async Task RunUniverseStep()
@@ -105,6 +150,57 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Services
             }
 
             return sb.ToString();
+        }
+
+        public async Task<GridStateDto> GetUniverseGrid()
+        {
+            // Calculate total universe dimensions
+            int totalWidth = _chunksX * _chunkSize;
+            int totalHeight = _chunksY * _chunkSize;
+
+            // Fetch all chunk states
+            var chunkStates = new Cell[_chunksX, _chunksY][,];
+
+            for (int cx = 0; cx < _chunksX; cx++)
+            {
+                for (int cy = 0; cy < _chunksY; cy++)
+                {
+                    var chunkId = GetChunkId(cx, cy);
+                    var chunk = _grainChunkFactory.GetGrain(chunkId);
+                    chunkStates[cx, cy] = await chunk.GetChunk();
+                }
+            }
+
+            // Build jagged array (JSON serializable)
+            var cells = new bool[totalWidth][];
+            for (int x = 0; x < totalWidth; x++)
+            {
+                cells[x] = new bool[totalHeight];
+            }
+
+            // Fill the grid
+            for (int cy = 0; cy < _chunksY; cy++)
+            {
+                for (int y = 0; y < _chunkSize; y++)
+                {
+                    for (int cx = 0; cx < _chunksX; cx++)
+                    {
+                        for (int x = 0; x < _chunkSize; x++)
+                        {
+                            int globalX = cx * _chunkSize + x;
+                            int globalY = cy * _chunkSize + y;
+                            cells[globalX][globalY] = chunkStates[cx, cy][x, y].IsAlive;
+                        }
+                    }
+                }
+            }
+
+            return new GridStateDto
+            {
+                Width = totalWidth,
+                Height = totalHeight,
+                Cells = cells
+            };
         }
 
         private async Task ConfigureChunkNeighbors()

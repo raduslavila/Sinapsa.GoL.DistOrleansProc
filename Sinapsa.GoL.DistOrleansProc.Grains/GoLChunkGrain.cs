@@ -151,9 +151,22 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
             await WriteStateAsync(); 
         }
 
-        public Task Clear()
+        public async Task Clear()
         {
-            throw new NotImplementedException();
+            // Reset all cells to dead state, keeping the chunk structure
+            if (State?.Cells != null)
+            {
+                for (int x = 0; x < State.Size; x++)
+                {
+                    for (int y = 0; y < State.Size; y++)
+                    {
+                        State.Cells[x, y].IsAlive = false;
+                        State.Cells[x, y].IsAliveNext = false;
+                    }
+                }
+
+                await WriteStateAsync();
+            }
         }
 
         public async Task<Cell[,]> GetChunk()

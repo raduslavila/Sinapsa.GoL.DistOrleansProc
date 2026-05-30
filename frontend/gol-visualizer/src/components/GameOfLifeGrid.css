@@ -1,0 +1,89 @@
+.grid-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.game-grid {
+  display: grid;
+  gap: 0;
+  background: #f0f0f0;
+  border: 2px solid #333;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cell {
+  transition: background-color 0.2s ease;
+  border: 0.5px solid rgba(200, 200, 200, 0.3);
+}
+
+.cell.alive {
+  background-color: #667eea;
+  box-shadow: inset 0 0 2px rgba(102, 126, 234, 0.5);
+}
+
+.cell.dead {
+  background-color: #ffffff;
+}
+
+.cell.chunk-border-x {
+  border-left: 2px solid #ff6b6b;
+}
+
+.cell.chunk-border-y {
+  border-top: 2px solid #ff6b6b;
+}
+
+.grid-info {
+  background: #f8f9fa;
+  padding: 1rem 1.5rem;
+  border-radius: 6px;
+  text-align: center;
+  width: 100%;
+  max-width: 600px;
+}
+
+.grid-info p {
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.grid-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  font-size: 1.2rem;
+  color: #999;
+}
+
+/* Animations for cells */
+@keyframes cellBirth {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cellDeath {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+}
+
+.cell.alive {
+  animation: cellBirth 0.2s ease-out;
+}
