@@ -1,0 +1,23 @@
+# Kind cluster configuration with host port mappings
+# NodePort 30000 → localhost:30000  (frontend)
+# NodePort 30050 → localhost:30050  (backend API)
+# NodePort 30051 → localhost:30051  (Orleans dashboard)
+#
+# Usage:
+#   kind create cluster --name gol --config kind-config.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30000
+        hostPort: 30000
+        protocol: TCP
+      - containerPort: 30050
+        hostPort: 30050
+        protocol: TCP
+      - containerPort: 30051
+        hostPort: 30051
+        protocol: TCP
+  - role: worker
+  - role: worker

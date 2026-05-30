@@ -18,11 +18,10 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Extensions
     {
         public static IServiceCollection AddGoLDistributedOrleansGrainFactories(this IServiceCollection services)
         {
+            // GoLService uses Orleans' built-in IGrainFactory (provided by the silo host) to
+            // resolve IGoLUniverseGrain.  The IClusterClient in-process is the IGrainFactory.
             services.AddSingleton<IGrainFactory>(q => q.GetRequiredService<IClusterClient>());
 
-            services.AddSingleton<IGrainFactory<IGoLChunkGrain, string>, GrainFactoryWithStringIdentity<IGoLChunkGrain>>();
-
-            services.AddSingleton<IUniverseGridDeltaService, UniverseGridDeltaService>();
             services.AddSingleton<IGoLService, GoLService>();
 
             return services;

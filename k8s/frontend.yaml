@@ -1,0 +1,60 @@
+# ── React Frontend Deployment (1 replica, served via nginx) ─────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gol-frontend
+  namespace: gol
+  labels:
+    app: gol-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gol-frontend
+  template:
+    metadata:
+      labels:
+        app: gol-frontend
+    spec:
+      containers:
+        - name: gol-frontend
+          image: gol-frontend:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            limits:
+              cpu: 200m
+              memory: 128Mi
+            requests:
+              cpu: 25m
+              memory: 32Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 15
+---
+# NodePort — exposes the frontend outside the cluster (via Kind port mapping)
+apiVersion: v1
+kind: Service
+metadata:
+  name: gol-frontend
+  namespace: gol
+spec:
+  type: NodePort
+  selector:
+    app: gol-frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      nodePort: 30000

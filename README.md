@@ -1,5 +1,138 @@
 
-# Sinapsa.GoL.DistOrleansProc
+# Sinapsa.GoL.DistOrleansProc — Distributed Conway's Game of Life
+
+A distributed implementation of [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) running on **Microsoft Orleans 10.1 / .NET 9**. The game grid is partitioned into chunks, each managed by an Orleans grain, and coordinated by a cluster-singleton universe grain — giving true horizontal scalability across multiple silos.
+
+## Features
+
+- **GoLUniverseGrain** — cluster-singleton that owns generation counter and grid dimensions; no duplicate or inconsistent state across pods.
+- **GoLChunkGrain** — one grain per chunk, distributed across silos with `ActivationCountBasedPlacement`, communicating edge states during each step.
+- **React + TypeScript frontend** with incremental delta updates (`GET /api/grid/update`).
+- **Orleans Dashboard** on the same port as the API (`/dashboard`).
+- **One-command Kubernetes deploy** (`deploy-kind.ps1`) for Docker Desktop or Kind.
+
+## Quick Start
+
+### Prerequisites
+
+- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- Node.js 20+ (for the frontend)
+- Docker Desktop (for Kubernetes deployment)
+
+### Local development (single silo)
+
+```bash
+# Backend
+cd Sinapsa.GoL.DistOrleansProc
+dotnet run
+# API → http://localhost:5050
+# Dashboard → http://localhost:5050/dashboard
+
+# Frontend (separate terminal)
+cd frontend/gol-visualizer
+npm install
+npm start
+# → http://localhost:3000
+```
+
+### Kubernetes (multi-silo)
+
+Requires Docker Desktop with Kubernetes enabled (or Kind).
+
+```powershell
+.\deploy-kind.ps1
+```
+
+This builds both images, loads them into cluster nodes, applies all manifests, waits for rollout, and starts `kubectl port-forward` background jobs.
+
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:30000 |
+| API | http://localhost:30050/api |
+| Orleans Dashboard | http://localhost:30050/dashboard |
+
+See [docs/QUICKSTART_DISTRIBUTED.md](docs/QUICKSTART_DISTRIBUTED.md) for full details and options.
+
+## API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/init` | Initialize universe (`chunksX`, `chunksY`, `chunkSize`, `liveDensity`) |
+| `POST` | `/api/reinit` | Re-randomize; reuses grain topology if dimensions unchanged |
+| `POST` | `/api/step` | Advance one generation across all chunk grains |
+| `GET` | `/api/grid` | Full grid snapshot (`{width, height, cells[][]}`) |
+| `GET` | `/api/grid/update?lastSeenGeneration=N` | Delta update or full snapshot if >1 gen behind |
+| `GET` | `/hc` | Health check |
+
+Swagger UI: `http://localhost:5050/swagger` (development only)
+
+## Configuration
+
+`appsettings.json`:
+
+```json
+{
+  "ClusterConfig": {
+    "UseLocalhost": true,
+    "UseKubernetesHosting": false,
+    "UseDashboard": true,
+    "ClusterOptions": {
+      "ClusterId": "dev-GoL",
+      "ServiceId": "dev-GoL-one"
+    },
+    "ClusterEndpointOptions": {
+      "SiloPort": 30000,
+      "GatewayPort": 11111
+    }
+  }
+}
+```
+
+For Kubernetes, `UseKubernetesHosting: true` is set via environment variables in `k8s/backend.yaml`. Orleans uses CRD-based cluster membership (`Orleans.Clustering.Kubernetes`).
+
+## Project Structure
+
+```
+Sinapsa.GoL.DistOrleansProc/          # ASP.NET Core host + Orleans silo
+  Controllers/UniverseController.cs   # REST API
+  Program.cs                          # Silo bootstrap
+  Startup.cs                          # Middleware
+Sinapsa.GoL.DistOrleansProc.Domain/   # Application layer
+  Services/GoLService.cs              # Thin proxy to GoLUniverseGrain
+Sinapsa.GoL.DistOrleansProc.GrainInterfaces/
+  IGoLUniverseGrain.cs               # Cluster-singleton coordinator
+  IGoLChunkGrain.cs                  # Per-chunk grain
+Sinapsa.GoL.DistOrleansProc.Grains/
+  GoLUniverseGrain.cs                # Universe coordinator implementation
+  GoLChunkGrain.cs                   # Chunk grain implementation
+Sinapsa.GoL.DistOrleansProc.Orleans.Core/  # Orleans infrastructure helpers
+frontend/gol-visualizer/             # React + TypeScript UI
+k8s/                                 # Kubernetes manifests
+deploy-kind.ps1                      # One-command local K8s deploy
+```
+
+## Docs
+
+- [Architecture](docs/ARCHITECTURE.md) — grain design, placement, state management
+- [Distributed Chunks](docs/DISTRIBUTED_CHUNKS.md) — inter-chunk communication protocol
+- [Kubernetes Quickstart](docs/QUICKSTART_DISTRIBUTED.md) — full K8s deploy walkthrough
+- [Visual Guide](docs/VISUAL_GUIDE.md) — ASCII diagrams of the grid and grain layout
+
+## Technologies
+
+- [.NET 9](https://dotnet.microsoft.com/download/dotnet/9.0) / ASP.NET Core 9
+- [Microsoft Orleans 10.1](https://github.com/dotnet/orleans)
+- [Orleans.Clustering.Kubernetes 10.0.1](https://github.com/OrleansContrib/Orleans.Clustering.Kubernetes)
+- [Orleans Dashboard](https://github.com/OrleansContrib/OrleansDashboard)
+- React 19 + TypeScript
+
+## License
+
+See [LICENSE.txt](LICENSE.txt).
+
+---
+
+*Author: Radu Slavila*
 
 > A distributed implementation of Conway's Game of Life using Microsoft Orleans
 
