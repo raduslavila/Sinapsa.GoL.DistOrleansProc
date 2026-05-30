@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import './App.css';
 import GameOfLifeGrid from './components/GameOfLifeGrid';
 import ControlPanel from './components/ControlPanel';
-import { initUniverse, reinitUniverse, runStep, getGrid } from './services/api';
+import { getGridUpdate, initUniverse, reinitUniverse, runStep, UniverseGridUpdateDto } from './services/api';
 
 interface UniverseConfig {
   chunksX: number;
@@ -25,6 +25,30 @@ function App() {
   const [autoRunInterval, setAutoRunInterval] = useState<number>(100);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  const applyUpdate = useCallback((update: UniverseGridUpdateDto) => {
+    if (update.isFullGrid || !grid.length || update.grid) {
+      if (update.grid?.cells) {
+        setGrid(update.grid.cells);
+      }
+      setGeneration(update.currentGeneration);
+      return;
+    }
+
+    if (update.deltas.length > 0) {
+      setGrid(prev => {
+        const next = prev.map(column => [...column]);
+        for (const delta of update.deltas) {
+          if (next[delta.x] && next[delta.x][delta.y] !== undefined) {
+            next[delta.x][delta.y] = delta.isAlive;
+          }
+        }
+        return next;
+      });
+    }
+
+    setGeneration(update.currentGeneration);
+  }, [grid.length]);
+
   const stopAutoRun = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -39,10 +63,9 @@ function App() {
       stopAutoRun();
 
       await initUniverse(config.chunksX, config.chunksY, config.chunkSize, config.liveDensity);
-      const gridData = await getGrid();
-      setGrid(gridData);
+      const update = await getGridUpdate(-1);
+      applyUpdate(update);
       setIsInitialized(true);
-      setGeneration(0);
     } catch (error) {
       console.error('Failed to initialize universe:', error);
       alert('Failed to initialize universe. Make sure the API is running on http://localhost:5050');
@@ -55,10 +78,9 @@ function App() {
       stopAutoRun();
 
       await reinitUniverse(config.chunksX, config.chunksY, config.chunkSize, config.liveDensity);
-      const gridData = await getGrid();
-      setGrid(gridData);
+      const update = await getGridUpdate(-1);
+      applyUpdate(update);
       setIsInitialized(true);
-      setGeneration(0);
     } catch (error) {
       console.error('Failed to re-initialize universe:', error);
       alert('Failed to re-initialize universe. Make sure the API is running on http://localhost:5050');
@@ -68,13 +90,12 @@ function App() {
   const handleStep = useCallback(async () => {
     try {
       await runStep();
-      const gridData = await getGrid();
-      setGrid(gridData);
-      setGeneration(prev => prev + 1);
+      const update = await getGridUpdate(generation);
+      applyUpdate(update);
     } catch (error) {
       console.error('Failed to run step:', error);
     }
-  }, []);
+  }, [applyUpdate, generation]);
 
   const handleAutoRun = () => {
     if (isRunning) {

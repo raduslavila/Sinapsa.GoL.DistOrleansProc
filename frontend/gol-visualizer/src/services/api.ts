@@ -6,6 +6,19 @@ interface GridStateDto {
   cells: boolean[][];
 }
 
+export interface UniverseGridCellDeltaDto {
+  x: number;
+  y: number;
+  isAlive: boolean;
+}
+
+export interface UniverseGridUpdateDto {
+  currentGeneration: number;
+  isFullGrid: boolean;
+  grid: GridStateDto | null;
+  deltas: UniverseGridCellDeltaDto[];
+}
+
 export const initUniverse = async (
   chunksX: number,
   chunksY: number,
@@ -61,4 +74,14 @@ export const getGrid = async (): Promise<boolean[][]> => {
 
   // Return the cells array directly
   return data.cells;
+};
+
+export const getGridUpdate = async (lastSeenGeneration: number): Promise<UniverseGridUpdateDto> => {
+  const response = await fetch(`${API_BASE_URL}/grid/update?lastSeenGeneration=${lastSeenGeneration}`);
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch grid update');
+  }
+
+  return response.json();
 };
