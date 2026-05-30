@@ -8,7 +8,5 @@ namespace Sinapsa.GoL.DistOrleansProc.Orleans.Core.Services
         where TGrainIdentity: IEquatable<TGrainIdentity>
     {
         TGrain GetGrain(TGrainIdentity grainIdentity);
-
-        TGrainIdentity GetIdentity(IGrainIdentity grainIdentity);
     }
 }

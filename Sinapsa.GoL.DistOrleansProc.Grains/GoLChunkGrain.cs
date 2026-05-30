@@ -16,18 +16,16 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
 
         private void ConnectNeighbors()
         {
-            var currentState = this.State;
-
-            for (int x = 0; x < currentState.Size; x++)
+            for (int x = 0; x < State.Size; x++)
             {
                 rand = new Random();
 
-                for (int y = 0; y < currentState.Size; y++)
+                for (int y = 0; y < State.Size; y++)
                 {
                     bool isLeftEdge = (x == 0);
-                    bool isRightEdge = (x == currentState.Size - 1);
+                    bool isRightEdge = (x == State.Size - 1);
                     bool isTopEdge = (y == 0);
-                    bool isBottomEdge = (y == currentState.Size - 1);
+                    bool isBottomEdge = (y == State.Size - 1);
 
                     int xL = x - 1;
                     int xR = x + 1;
@@ -36,35 +34,35 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
 
                     if (!isLeftEdge && !isTopEdge)
                     {
-                        currentState.Cells[x, y].neighbors.Add(currentState.Cells[xL, yT]);
+                        State.Cells[x, y].neighbors.Add(State.Cells[xL, yT]);
                     }
                     if (!isTopEdge)
                     {
-                        currentState.Cells[x, y].neighbors.Add(currentState.Cells[x, yT]);
+                        State.Cells[x, y].neighbors.Add(State.Cells[x, yT]);
                     }
                     if (!isRightEdge && !isTopEdge)
                     {
-                        currentState.Cells[x, y].neighbors.Add(currentState.Cells[xR, yT]);
+                        State.Cells[x, y].neighbors.Add(State.Cells[xR, yT]);
                     }
                     if (!isLeftEdge)
                     {
-                        currentState.Cells[x, y].neighbors.Add(currentState.Cells[xL, y]);
+                        State.Cells[x, y].neighbors.Add(State.Cells[xL, y]);
                     }
                     if (!isRightEdge)
                     {
-                        currentState.Cells[x, y].neighbors.Add(currentState.Cells[xR, y]);
+                        State.Cells[x, y].neighbors.Add(State.Cells[xR, y]);
                     }
                     if (!isLeftEdge && !isBottomEdge)
                     {
-                        currentState.Cells[x, y].neighbors.Add(currentState.Cells[xL, yB]);
+                        State.Cells[x, y].neighbors.Add(State.Cells[xL, yB]);
                     }
                     if (!isBottomEdge)
                     {
-                        currentState.Cells[x, y].neighbors.Add(currentState.Cells[x, yB]);
+                        State.Cells[x, y].neighbors.Add(State.Cells[x, yB]);
                     }
                     if (!isRightEdge && !isBottomEdge)
                     {
-                        currentState.Cells[x, y].neighbors.Add(currentState.Cells[xR, yB]);
+                        State.Cells[x, y].neighbors.Add(State.Cells[xR, yB]);
                     }
                 }
             }
@@ -88,8 +86,6 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
             foreach (var cell in this.State.Cells)
                 cell.IsAlive = rand.NextDouble() < liveDensity;
 
-            ConnectNeighbors();
-
             await WriteStateAsync();
         }
 
@@ -111,7 +107,7 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
                     bool isBottomEdge = (h == State.Size - 1);
 
                     // Count neighbors within this chunk
-                    int liveNeighbors = State.Cells[w, h].neighbors.Count(x => x.IsAlive);
+                    int liveNeighbors = CountInternalNeighbors(w, h);
 
                     // Add cross-chunk neighbors if on edge
                     liveNeighbors += CountCrossChunkNeighbors(w, h, isLeftEdge, isRightEdge, isTopEdge, isBottomEdge, neighborEdges);
@@ -387,6 +383,37 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
             if (isBottomEdge && isRightEdge && edgeData.BottomRightCorner) crossChunkNeighbors++;
 
             return crossChunkNeighbors;
+        }
+
+        private int CountInternalNeighbors(int x, int y)
+        {
+            var count = 0;
+
+            for (var dx = -1; dx <= 1; dx++)
+            {
+                for (var dy = -1; dy <= 1; dy++)
+                {
+                    if (dx == 0 && dy == 0)
+                    {
+                        continue;
+                    }
+
+                    var nx = x + dx;
+                    var ny = y + dy;
+
+                    if (nx < 0 || nx >= State.Size || ny < 0 || ny >= State.Size)
+                    {
+                        continue;
+                    }
+
+                    if (State.Cells[nx, ny].IsAlive)
+                    {
+                        count++;
+                    }
+                }
+            }
+
+            return count;
         }
 
         #endregion

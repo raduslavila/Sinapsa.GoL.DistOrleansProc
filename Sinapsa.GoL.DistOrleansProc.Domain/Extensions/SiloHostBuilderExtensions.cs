@@ -2,11 +2,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Orleans;
+using Orleans.Dashboard;
 using Orleans.Configuration;
 using Orleans.Hosting;
 using Orleans.Providers;
 using Orleans.Runtime;
-using Orleans.Statistics;
 using Sinapsa.GoL.DistOrleansProc.Domain.Configuration;
 using Sinapsa.GoL.DistOrleansProc.GrainInterfaces;
 using System.Reflection;
@@ -36,18 +36,12 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Extensions
             }
             clusterOptionsBuilder?.Invoke(clusterConfig);
 
-
             if (clusterConfig.UseDashboard)
             {
-                siloBuilder.UseDashboard(o =>
+                siloBuilder.AddDashboard(o =>
                 {
                     o.CounterUpdateIntervalMs = 5000;
                     o.HideTrace = false;
-                    o.BasePath = clusterConfig.DashboardPath ?? "dashboard";
-                    if (clusterConfig.DashboardPort.HasValue)
-                    {
-                        o.Port = clusterConfig.DashboardPort.Value;
-                    }
                 });
             }
 
@@ -70,11 +64,6 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Extensions
             }
             else
             {
-                if (clusterConfig.UseLinuxStatistics)
-                {
-                    siloBuilder.UseLinuxEnvironmentStatistics();
-                }
-
                 if (!clusterConfig.UseKubernetesHosting)
                 {
                     siloBuilder.Configure<EndpointOptions>(options =>

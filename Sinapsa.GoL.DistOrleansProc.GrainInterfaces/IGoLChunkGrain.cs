@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace Sinapsa.GoL.DistOrleansProc.GrainInterfaces
 {
+    [Alias("Sinapsa.GoL.DistOrleansProc.GrainInterfaces.IGoLChunkGrain")]
     public interface IGoLChunkGrain : IGrainWithStringKey, IGrain<string>
     {
         [AlwaysInterleave]

@@ -12,6 +12,7 @@
     <None Include="ARCHITECTURE.md" />
     <None Include="BEFORE_AFTER.md" />
     <None Include="CHANGED_CELLS_TRACKING.md" />
+    <None Include="Directory.Packages.props" />
     <None Include="DISTRIBUTED_CHUNKS.md" />
     <None Include="docker-compose.override.yml">
       <DependentUpon>docker-compose.yml</DependentUpon>

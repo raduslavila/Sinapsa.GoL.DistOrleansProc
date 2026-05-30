@@ -32,10 +32,5 @@ namespace Sinapsa.GoL.DistOrleansProc.Orleans.Core.Services
             }
             return new RentedGrain<TGrain, Guid>(treeContext, this.Release);
         }
-
-        public Guid GetIdentity(IGrainIdentity grainIdentity)
-        {
-            return grainIdentity.GetPrimaryKey(out _);
-        }
     }
 }
