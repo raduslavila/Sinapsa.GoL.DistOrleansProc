@@ -1,4 +1,4 @@
-version: '3.4'
+version: '1.0'
 
 services:
   sinapsa.gol.distorleansproc:
@@ -8,3 +8,12 @@ services:
       dockerfile: Sinapsa.GoL.DistOrleansProc/Dockerfile
     ports:
       - 5050:5050
+    deploy:
+      resources:
+        limits:
+          cpus: 500m
+          memory: 200M
+        reservations:
+          cpus: 25m
+          memory: 20M
+      

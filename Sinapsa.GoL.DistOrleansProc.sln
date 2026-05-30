@@ -15,6 +15,22 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sinapsa.GoL.DistOrleansProc
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{58D445C6-40D3-412B-9A43-12D6FF21E66C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		docs\ARCHITECTURE.md = docs\ARCHITECTURE.md
+		docs\BEFORE_AFTER.md = docs\BEFORE_AFTER.md
+		docs\CHANGED_CELLS_TRACKING.md = docs\CHANGED_CELLS_TRACKING.md
+		docs\CLEANUP_COMPLETE.md = docs\CLEANUP_COMPLETE.md
+		docs\DISTRIBUTED_CHUNKS.md = docs\DISTRIBUTED_CHUNKS.md
+		docs\DONE.md = docs\DONE.md
+		docs\IMPLEMENTATION_SUMMARY.md = docs\IMPLEMENTATION_SUMMARY.md
+		docs\MIGRATION_LEGACY_REMOVED.md = docs\MIGRATION_LEGACY_REMOVED.md
+		docs\QUICKSTART_DISTRIBUTED.md = docs\QUICKSTART_DISTRIBUTED.md
+		docs\VISUAL_GUIDE.md = docs\VISUAL_GUIDE.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "frontend", "frontend", "{013A0AC2-A891-4C41-B5E1-1D5840DDBAB4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

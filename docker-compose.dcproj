@@ -9,10 +9,33 @@
     <DockerServiceName>sinapsa.gol.distorleansproc</DockerServiceName>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="ARCHITECTURE.md" />
+    <None Include="BEFORE_AFTER.md" />
+    <None Include="CHANGED_CELLS_TRACKING.md" />
+    <None Include="DISTRIBUTED_CHUNKS.md" />
     <None Include="docker-compose.override.yml">
       <DependentUpon>docker-compose.yml</DependentUpon>
     </None>
     <None Include="docker-compose.yml" />
     <None Include=".dockerignore" />
+    <None Include="DONE.md" />
+    <None Include="frontend\gol-visualizer\README.md" />
+    <None Include="frontend\gol-visualizer\src\App.css" />
+    <None Include="frontend\gol-visualizer\src\App.tsx" />
+    <None Include="frontend\gol-visualizer\src\components\ControlPanel.css" />
+    <None Include="frontend\gol-visualizer\src\components\ControlPanel.tsx" />
+    <None Include="frontend\gol-visualizer\src\components\GameOfLifeGrid.css" />
+    <None Include="frontend\gol-visualizer\src\components\GameOfLifeGrid.tsx" />
+    <None Include="frontend\gol-visualizer\src\index.css" />
+    <None Include="frontend\gol-visualizer\src\services\api.ts" />
+    <None Include="IMPLEMENTATION_SUMMARY.md" />
+    <None Include="JSON_SERIALIZATION_FIX.md" />
+    <None Include="MIGRATION_LEGACY_REMOVED.md" />
+    <None Include="QUICKSTART_DISTRIBUTED.md" />
+    <None Include="QUICKSTART_FRONTEND.md" />
+    <None Include="REACT_FRONTEND_COMPLETE.md" />
+    <None Include="REINITIALIZE_FEATURE.md" />
+    <None Include="SQUARE_CHUNKS_REFACTORING.md" />
+    <None Include="VISUAL_GUIDE.md" />
   </ItemGroup>
 </Project>

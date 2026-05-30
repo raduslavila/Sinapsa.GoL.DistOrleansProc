@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sinapsagoldistorleansproc
+spec:
+  selector:
+    matchLabels:
+      app: sinapsagoldistorleansproc
+      version: 1.0.0
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: sinapsagoldistorleansproc
+        version: 1.0.0
+    spec:
+      containers:
+      - name: sinapsagoldistorleansproc
+        image: sinapsagoldistorleansproc:dev
+        env:
+        - name: "PORT"
+          value: "5050"
+        resources:
+          limits:
+            cpu: 500m
+            memory: 200M
+          requests:
+            cpu: 25m
+            memory: 20M
+        startupProbe:
+          httpGet:
+            path: /hc
+            port: 5050
+          failureThreshold: 12
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /hc
+            port: 5050
+          initialDelaySeconds: 1
+          periodSeconds: 3
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 5
+        livenessProbe:
+          httpGet:
+            path: /hc
+            port: 5050
+          initialDelaySeconds: 1
+          periodSeconds: 3
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 5

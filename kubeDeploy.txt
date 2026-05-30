@@ -1,0 +1,5 @@
+kubectl create namespace sinapsagoldistorleansproc
+
+kubectl apply -f .\local-k8s-service.yaml --namespace=sinapsagoldistorleansproc
+
+kubectl apply -f .\local-k8s-api.yaml --namespace=sinapsagoldistorleansproc

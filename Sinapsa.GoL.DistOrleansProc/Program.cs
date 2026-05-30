@@ -48,6 +48,18 @@ namespace Sinapsa.GoL.DistOrleansProc
                 }).ConfigureServices(services =>
                 {
                     services.AddControllers();
+
+                    // Add CORS for React frontend
+                    services.AddCors(options =>
+                    {
+                        options.AddPolicy("AllowReactApp", builder =>
+                        {
+                            builder.WithOrigins("http://localhost:3000")
+                                   .AllowAnyMethod()
+                                   .AllowAnyHeader();
+                        });
+                    });
+
                     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
                     services.AddEndpointsApiExplorer();
                     services.AddSwaggerGen();

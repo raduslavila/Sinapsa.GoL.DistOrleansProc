@@ -1,4 +1,5 @@
 ﻿using Orleans;
+using Orleans;
 using Orleans.Providers;
 using Sinapsa.GoL.DistOrleansProc.GrainInterfaces;
 using Sinapsa.GoL.DistOrleansProc.GrainInterfaces.Models;
@@ -6,7 +7,8 @@ using System.Diagnostics;
 
 namespace Sinapsa.GoL.DistOrleansProc.Grains
 {
-
+    // TODO: Add Redis persistence support for distributed state management
+    // Consider using [StorageProvider(ProviderName = "RedisGrainStorage")] when migrating to Redis
     [StorageProvider(ProviderName = "ChunkMemory")]
     public class GoLChunkGrain : Grain<GoLChunkGrainState>, IGoLChunkGrain
     {
@@ -16,20 +18,16 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
         {
             var currentState = this.State;
 
-            for (int x = 0; x < currentState.Width; x++)
+            for (int x = 0; x < currentState.Size; x++)
             {
                 rand = new Random();
 
-                for (int y = 0; y < currentState.Height; y++)
+                for (int y = 0; y < currentState.Size; y++)
                 {
                     bool isLeftEdge = (x == 0);
-                    bool isRightEdge = (x == currentState.Width - 1);
+                    bool isRightEdge = (x == currentState.Size - 1);
                     bool isTopEdge = (y == 0);
-                    bool isBottomEdge = (y == currentState.Height - 1);
-                    //bool isEdge = isLeftEdge | isRightEdge | isTopEdge | isBottomEdge;
-
-                    //if (isEdge)
-                    //    continue;
+                    bool isBottomEdge = (y == currentState.Size - 1);
 
                     int xL = x - 1;
                     int xR = x + 1;
@@ -72,16 +70,19 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
             }
         }
 
-        public async void InitRandomChunk(int width, int height, double liveDensity)
+        public async Task InitChunk(int chunkX, int chunkY, int size, double liveDensity)
         {
-            this.State = new GoLChunkGrainState();
+            this.State = new GoLChunkGrainState
+            {
+                ChunkId = this.GetPrimaryKeyString(),
+                ChunkLocationX = chunkX,
+                ChunkLocationY = chunkY,
+                Size = size,
+                Cells = new Cell[size, size]
+            };
 
-            this.State.Cells = new Cell[width, height];
-            this.State.Width = width;
-            this.State.Height = height;   
-
-            for (int x = 0; x < this.State.Width; x++)
-                for (int y = 0; y < this.State.Height; y++)
+            for (int x = 0; x < this.State.Size; x++)
+                for (int y = 0; y < this.State.Size; y++)
                     this.State.Cells[x, y] = new Cell();
 
             foreach (var cell in this.State.Cells)
@@ -97,75 +98,297 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
         {
             await ReadStateAsync();
 
-            var currentState = this.State;
+            // Fetch neighbor edge data for cross-chunk boundary cells
+            var neighborEdges = await FetchNeighborEdges();
 
-            for (int w = 0; w < currentState.Width; w++)
+            for (int w = 0; w < State.Size; w++)
             {
-                for (int h = 0; h < currentState.Height; h++)
+                for (int h = 0; h < State.Size; h++)
                 {
-                    //Any live cell with fewer than two live neighbours dies, as if by underpopulation.
-                    //Any live cell with more than three live neighbours dies, as if by overpopulation.
-                    //Any live cell with two or three live neighbours lives on to the next generation.
-                    //Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
-
-                    //if (!Cells[w, h].neighbors.Any(x => x.IsAlive))
-                    //{
-                    //    Cells[w, h].IsAliveNext = false;
-                    //}
-                    //else
-                    //{
-
-
-
-                    int liveNeighbors = currentState.Cells[w, h].neighbors.Count(x => x.IsAlive);
-
-                    if (currentState.Cells[w, h].IsAlive)
-                        currentState.Cells[w, h].IsAliveNext = liveNeighbors == 2 || liveNeighbors == 3;
-                    else
-                        currentState.Cells[w, h].IsAliveNext = liveNeighbors == 3;
-                    //}
-
-                    //if this gets alive, and is on edge, new chunks should be generated 
                     bool isLeftEdge = (w == 0);
-                    bool isRightEdge = (w == currentState.Width - 1);
+                    bool isRightEdge = (w == State.Size - 1);
                     bool isTopEdge = (h == 0);
-                    bool isBottomEdge = (h == currentState.Height - 1);
+                    bool isBottomEdge = (h == State.Size - 1);
 
-                    if (currentState.Cells[w, h].IsAliveNext)
+                    // Count neighbors within this chunk
+                    int liveNeighbors = State.Cells[w, h].neighbors.Count(x => x.IsAlive);
+
+                    // Add cross-chunk neighbors if on edge
+                    liveNeighbors += CountCrossChunkNeighbors(w, h, isLeftEdge, isRightEdge, isTopEdge, isBottomEdge, neighborEdges);
+
+                    // Apply Conway's Game of Life rules
+                    if (State.Cells[w, h].IsAlive)
+                        State.Cells[w, h].IsAliveNext = liveNeighbors == 2 || liveNeighbors == 3;
+                    else
+                        State.Cells[w, h].IsAliveNext = liveNeighbors == 3;
+                }
+            }
+
+            // Capture changed cells (diff between IsAliveNext and IsAlive)
+            var changedCells = Enumerable.Range(0, State.Size)
+                .SelectMany(w => Enumerable.Range(0, State.Size)
+                    .Where(h => State.Cells[w, h].IsAlive != State.Cells[w, h].IsAliveNext)
+                    .Select(h => new
                     {
+                        X = w,
+                        Y = h,
+                        WasAlive = State.Cells[w, h].IsAlive,
+                        WillBeAlive = State.Cells[w, h].IsAliveNext,
+                        Change = State.Cells[w, h].IsAliveNext ? "Born" : "Died"
+                    }))
+                .ToList();
 
-                    }
-                }
-            }
-
-            for (int w = 0; w < currentState.Width; w++)
+            // Update all cells to their next state
+            for (int w = 0; w < State.Size; w++)
             {
-                for (int h = 0; h < currentState.Height; h++)
+                for (int h = 0; h < State.Size; h++)
                 {
-                    currentState.Cells[w, h].IsAlive = currentState.Cells[w, h].IsAliveNext;
+                    State.Cells[w, h].IsAlive = State.Cells[w, h].IsAliveNext;
                 }
             }
 
+            // TODO: When migrating to Redis, consider batching writes for better performance
             await WriteStateAsync(); 
         }
 
-        public Task Clear()
+        public async Task Clear()
         {
-            throw new NotImplementedException();
+            // Reset all cells to dead state, keeping the chunk structure
+            if (State?.Cells != null)
+            {
+                for (int x = 0; x < State.Size; x++)
+                {
+                    for (int y = 0; y < State.Size; y++)
+                    {
+                        State.Cells[x, y].IsAlive = false;
+                        State.Cells[x, y].IsAliveNext = false;
+                    }
+                }
+
+                await WriteStateAsync();
+            }
         }
 
         public async Task<Cell[,]> GetChunk()
         {
             await ReadStateAsync();
 
-            var currentState = this.State;
-
-            return currentState.Cells;
+            return this.State.Cells;
         }
 
         public Task SetChunk(Cell[][] value)
         {
             throw new NotImplementedException();
         }
+
+        #region Inter-Chunk Communication Methods
+
+        public async Task SetNeighborChunks(
+            string topChunkId, string bottomChunkId,
+            string leftChunkId, string rightChunkId,
+            string topLeftChunkId, string topRightChunkId,
+            string bottomLeftChunkId, string bottomRightChunkId)
+        {
+            await ReadStateAsync();
+
+            State.TopChunkId = topChunkId;
+            State.BottomChunkId = bottomChunkId;
+            State.LeftChunkId = leftChunkId;
+            State.RightChunkId = rightChunkId;
+            State.TopLeftChunkId = topLeftChunkId;
+            State.TopRightChunkId = topRightChunkId;
+            State.BottomLeftChunkId = bottomLeftChunkId;
+            State.BottomRightChunkId = bottomRightChunkId;
+
+            await WriteStateAsync();
+        }
+
+        public async Task<bool[]> GetTopEdge()
+        {
+            await ReadStateAsync();
+            var edge = new bool[State.Size];
+            for (int x = 0; x < State.Size; x++)
+            {
+                edge[x] = State.Cells[x, 0].IsAlive;
+            }
+            return edge;
+        }
+
+        public async Task<bool[]> GetBottomEdge()
+        {
+            await ReadStateAsync();
+            var edge = new bool[State.Size];
+            for (int x = 0; x < State.Size; x++)
+            {
+                edge[x] = State.Cells[x, State.Size - 1].IsAlive;
+            }
+            return edge;
+        }
+
+        public async Task<bool[]> GetLeftEdge()
+        {
+            await ReadStateAsync();
+            var edge = new bool[State.Size];
+            for (int y = 0; y < State.Size; y++)
+            {
+                edge[y] = State.Cells[0, y].IsAlive;
+            }
+            return edge;
+        }
+
+        public async Task<bool[]> GetRightEdge()
+        {
+            await ReadStateAsync();
+            var edge = new bool[State.Size];
+            for (int y = 0; y < State.Size; y++)
+            {
+                edge[y] = State.Cells[State.Size - 1, y].IsAlive;
+            }
+            return edge;
+        }
+
+        public async Task<bool> GetTopLeftCorner()
+        {
+            await ReadStateAsync();
+            return State.Cells[0, 0].IsAlive;
+        }
+
+        public async Task<bool> GetTopRightCorner()
+        {
+            await ReadStateAsync();
+            return State.Cells[State.Size - 1, 0].IsAlive;
+        }
+
+        public async Task<bool> GetBottomLeftCorner()
+        {
+            await ReadStateAsync();
+            return State.Cells[0, State.Size - 1].IsAlive;
+        }
+
+        public async Task<bool> GetBottomRightCorner()
+        {
+            await ReadStateAsync();
+            return State.Cells[State.Size - 1, State.Size - 1].IsAlive;
+        }
+
+        #endregion
+
+        #region Helper Methods for Cross-Chunk Communication
+
+        private class NeighborEdgeData
+        {
+            public bool[] TopEdge { get; set; }
+            public bool[] BottomEdge { get; set; }
+            public bool[] LeftEdge { get; set; }
+            public bool[] RightEdge { get; set; }
+            public bool TopLeftCorner { get; set; }
+            public bool TopRightCorner { get; set; }
+            public bool BottomLeftCorner { get; set; }
+            public bool BottomRightCorner { get; set; }
+        }
+
+        private async Task<NeighborEdgeData> FetchNeighborEdges()
+        {
+            var edgeData = new NeighborEdgeData();
+
+            // Fetch edges from neighboring chunks if they exist
+            if (!string.IsNullOrEmpty(State.TopChunkId))
+            {
+                var topChunk = GrainFactory.GetGrain<IGoLChunkGrain>(State.TopChunkId);
+                edgeData.TopEdge = await topChunk.GetBottomEdge();
+            }
+
+            if (!string.IsNullOrEmpty(State.BottomChunkId))
+            {
+                var bottomChunk = GrainFactory.GetGrain<IGoLChunkGrain>(State.BottomChunkId);
+                edgeData.BottomEdge = await bottomChunk.GetTopEdge();
+            }
+
+            if (!string.IsNullOrEmpty(State.LeftChunkId))
+            {
+                var leftChunk = GrainFactory.GetGrain<IGoLChunkGrain>(State.LeftChunkId);
+                edgeData.LeftEdge = await leftChunk.GetRightEdge();
+            }
+
+            if (!string.IsNullOrEmpty(State.RightChunkId))
+            {
+                var rightChunk = GrainFactory.GetGrain<IGoLChunkGrain>(State.RightChunkId);
+                edgeData.RightEdge = await rightChunk.GetLeftEdge();
+            }
+
+            // Fetch corners
+            if (!string.IsNullOrEmpty(State.TopLeftChunkId))
+            {
+                var topLeftChunk = GrainFactory.GetGrain<IGoLChunkGrain>(State.TopLeftChunkId);
+                edgeData.TopLeftCorner = await topLeftChunk.GetBottomRightCorner();
+            }
+
+            if (!string.IsNullOrEmpty(State.TopRightChunkId))
+            {
+                var topRightChunk = GrainFactory.GetGrain<IGoLChunkGrain>(State.TopRightChunkId);
+                edgeData.TopRightCorner = await topRightChunk.GetBottomLeftCorner();
+            }
+
+            if (!string.IsNullOrEmpty(State.BottomLeftChunkId))
+            {
+                var bottomLeftChunk = GrainFactory.GetGrain<IGoLChunkGrain>(State.BottomLeftChunkId);
+                edgeData.BottomLeftCorner = await bottomLeftChunk.GetTopRightCorner();
+            }
+
+            if (!string.IsNullOrEmpty(State.BottomRightChunkId))
+            {
+                var bottomRightChunk = GrainFactory.GetGrain<IGoLChunkGrain>(State.BottomRightChunkId);
+                edgeData.BottomRightCorner = await bottomRightChunk.GetTopLeftCorner();
+            }
+
+            return edgeData;
+        }
+
+        private int CountCrossChunkNeighbors(int x, int y, bool isLeftEdge, bool isRightEdge, bool isTopEdge, bool isBottomEdge, NeighborEdgeData edgeData)
+        {
+            int crossChunkNeighbors = 0;
+
+            // Top edge neighbors
+            if (isTopEdge && edgeData.TopEdge != null)
+            {
+                if (!isLeftEdge && edgeData.TopEdge[x - 1]) crossChunkNeighbors++;
+                if (edgeData.TopEdge[x]) crossChunkNeighbors++;
+                if (!isRightEdge && edgeData.TopEdge[x + 1]) crossChunkNeighbors++;
+            }
+
+            // Bottom edge neighbors
+            if (isBottomEdge && edgeData.BottomEdge != null)
+            {
+                if (!isLeftEdge && edgeData.BottomEdge[x - 1]) crossChunkNeighbors++;
+                if (edgeData.BottomEdge[x]) crossChunkNeighbors++;
+                if (!isRightEdge && edgeData.BottomEdge[x + 1]) crossChunkNeighbors++;
+            }
+
+            // Left edge neighbors
+            if (isLeftEdge && edgeData.LeftEdge != null)
+            {
+                if (!isTopEdge && edgeData.LeftEdge[y - 1]) crossChunkNeighbors++;
+                if (edgeData.LeftEdge[y]) crossChunkNeighbors++;
+                if (!isBottomEdge && edgeData.LeftEdge[y + 1]) crossChunkNeighbors++;
+            }
+
+            // Right edge neighbors
+            if (isRightEdge && edgeData.RightEdge != null)
+            {
+                if (!isTopEdge && edgeData.RightEdge[y - 1]) crossChunkNeighbors++;
+                if (edgeData.RightEdge[y]) crossChunkNeighbors++;
+                if (!isBottomEdge && edgeData.RightEdge[y + 1]) crossChunkNeighbors++;
+            }
+
+            // Corner neighbors
+            if (isTopEdge && isLeftEdge && edgeData.TopLeftCorner) crossChunkNeighbors++;
+            if (isTopEdge && isRightEdge && edgeData.TopRightCorner) crossChunkNeighbors++;
+            if (isBottomEdge && isLeftEdge && edgeData.BottomLeftCorner) crossChunkNeighbors++;
+            if (isBottomEdge && isRightEdge && edgeData.BottomRightCorner) crossChunkNeighbors++;
+
+            return crossChunkNeighbors;
+        }
+
+        #endregion
     }
 }

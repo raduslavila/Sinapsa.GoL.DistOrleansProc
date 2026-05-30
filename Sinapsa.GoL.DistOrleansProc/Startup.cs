@@ -32,6 +32,9 @@ namespace Sinapsa.GoL.DistOrleansProc
 
             app.UseRouting();
 
+            // Enable CORS
+            app.UseCors("AllowReactApp");
+
             if (env.IsDevelopment())
             {
                 app.UseSwagger();

@@ -24,8 +24,6 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Extensions
 
             services.AddSingleton<IGoLService, GoLService>();
 
-
-
             return services;
         }
     }

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sinapsagoldistorleansproc-service
+spec:
+  selector:
+    app: sinapsagoldistorleansproc
+    version: 1.0.0
+  ports:
+    - name: http
+      protocol: TCP
+      port: 5050
+      targetPort: 5050
+    # - name: https
+    #   protocol: TCP
+    #   port: 5051
+    #   targetPort: 5051
