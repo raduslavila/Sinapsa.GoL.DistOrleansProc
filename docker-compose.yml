@@ -1,13 +1,11 @@
-version: '1.0'
-
 services:
-  sinapsa.gol.distorleansproc:
-    image: ${DOCKER_REGISTRY-}sinapsagoldistorleansproc
+  gol-backend:
+    image: ${DOCKER_REGISTRY-}gol-backend
     build:
       context: .
       dockerfile: Sinapsa.GoL.DistOrleansProc/Dockerfile
     ports:
-      - 5050:5050
+      - "5050:5050"
     deploy:
       resources:
         limits:
@@ -16,4 +14,14 @@ services:
         reservations:
           cpus: 0.025
           memory: 20M
+
+  gol-frontend:
+    image: ${DOCKER_REGISTRY-}gol-frontend
+    build:
+      context: ./frontend/gol-visualizer
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - gol-backend
       

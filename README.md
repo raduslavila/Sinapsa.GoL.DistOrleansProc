@@ -27,6 +27,20 @@ npm start
 # → http://localhost:3000
 ```
 
+### Docker Compose (single silo + frontend)
+
+Requires Docker Desktop running.
+
+```bash
+docker compose up --build
+```
+
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| API | http://localhost:5050/api |
+| Orleans Dashboard | http://localhost:5050/dashboard |
+
 ### Kubernetes (multi-silo)
 
 Requires Docker Desktop with Kubernetes enabled (or Kind).
