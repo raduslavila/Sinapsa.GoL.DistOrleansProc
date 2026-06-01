@@ -53,13 +53,13 @@ Requires Docker Desktop with Kubernetes enabled (or Kind).
 .\deploy-kind.ps1
 ```
 
-This builds both images, loads them into cluster nodes, applies all manifests, waits for rollout, and starts `kubectl port-forward` background jobs.
+This builds both images, loads them into cluster nodes, applies all manifests, and waits for rollout. Access is via NodePort/Kind host mappings.
 
 | Service | URL |
 |---------|-----|
 | Frontend | http://localhost:30000 |
 | API | http://localhost:30050/api |
-| Orleans Dashboard | http://localhost:30051/dashboard |
+| Orleans Dashboard | http://localhost:30050/dashboard |
 | RedisInsight | http://localhost:30054 |
 
 See [docs/QUICKSTART_DISTRIBUTED.md](docs/QUICKSTART_DISTRIBUTED.md) for options and re-deploy instructions.

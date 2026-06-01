@@ -18,9 +18,9 @@ The script:
 1. Detects whether the active `kubectl` context is Docker Desktop or Kind.
 2. Builds the backend (`gol-backend:local`) and frontend (`gol-frontend:local`) Docker images.
 3. Loads images into every cluster node (Docker Desktop multi-node: imports via `ctr`; Kind: uses `kind load`).
-4. Applies all manifests in `k8s/` (CRDs, namespace, RBAC, backend deployment, frontend deployment).
+4. Applies all manifests in `k8s/` (CRDs, namespace, RBAC, Redis, RedisInsight, backend deployment, frontend deployment).
 5. Waits for rollouts to complete.
-6. Starts `kubectl port-forward` background jobs.
+6. Uses NodePort/Kind host mappings for local access.
 
 ### Script parameters
 
@@ -28,7 +28,6 @@ The script:
 |-----------|---------|-------------|
 | `-KindClusterName` | `gol` | Kind cluster name |
 | `-SkipBuild` | off | Reuse existing local images |
-| `-ForcePortForward` | off | Always start port-forward jobs |
 
 ## Access
 
@@ -79,12 +78,14 @@ kubectl rollout status deployment/gol-backend  -n gol --timeout=180s
 | `crds.yaml` | Orleans clustering CRDs (`silos.orleans.dot.net`, `clusterversions.orleans.dot.net`) |
 | `namespace.yaml` | Namespace `gol` |
 | `rbac.yaml` | ServiceAccount + Role with CRD read/write access |
+| `redis.yaml` | Redis Deployment + ClusterIP Service |
+| `redis-insight.yaml` | RedisInsight Deployment + NodePort Service (`30054`) |
 | `backend.yaml` | 4-replica `gol-backend` Deployment + NodePort Service (`gol-backend-external`, port 30050→5050) |
 | `frontend.yaml` | 1-replica `gol-frontend` Deployment + NodePort Service (`gol-frontend`, port 30000→80) |
 
 ## Notes
 
-- NodePort services are **not reachable on `localhost`** in multi-node Docker Desktop without extra port mappings. The script always uses `kubectl port-forward` to bridge this.
+- NodePort services are exposed on `localhost` through the Kind host mappings in `kind-config.yaml`.
 - `ClusterId` must be lowercase (`k8s-gol`) to satisfy RFC 1123 / Kubernetes CRD naming rules.
 - `imagePullPolicy: IfNotPresent` — a rebuilt image must be explicitly loaded into each node before a rollout picks it up.
-- The Orleans Dashboard (`/dashboard`) shares port 5050 with the API; there is no separate dashboard server.
+- The Orleans Dashboard (`/dashboard`) is served by the backend pods on the same 5050 NodePort as the API.

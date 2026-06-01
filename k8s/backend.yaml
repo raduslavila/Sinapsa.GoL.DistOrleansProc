@@ -61,7 +61,7 @@ spec:
             - name: ClusterConfig__UseKubernetesHosting
               value: "true"
             - name: ClusterConfig__UseDashboard
-              value: "false"
+              value: "true"
             - name: ClusterConfig__DashboardPort
               value: "8000"
             - name: ClusterConfig__DashboardPath

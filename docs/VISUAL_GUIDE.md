@@ -88,7 +88,7 @@ All edge reads are `[AlwaysInterleave]`, so chunks within the same silo read eac
 ```
 Browser / curl
     │
-    │  kubectl port-forward svc/gol-backend-external 30050:5050
+    │  http://localhost:30050
     ▼
 Any backend pod (5050)
     │  GoLService.RunUniverseStep()

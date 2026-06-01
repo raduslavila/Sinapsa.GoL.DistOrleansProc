@@ -1,7 +1,6 @@
 # Kind cluster configuration with host port mappings
 # NodePort 30000 → localhost:30000  (frontend)
 # NodePort 30050 → localhost:30050  (backend API)
-# NodePort 30051 → localhost:30051  (Orleans dashboard)
 # NodePort 30054 → localhost:30054  (RedisInsight)
 #
 # Usage:
@@ -16,9 +15,6 @@ nodes:
         protocol: TCP
       - containerPort: 30050
         hostPort: 30050
-        protocol: TCP
-      - containerPort: 30051
-        hostPort: 30051
         protocol: TCP
       - containerPort: 30054
         hostPort: 30054
