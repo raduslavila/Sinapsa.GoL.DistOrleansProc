@@ -88,9 +88,16 @@ All edge reads are `[AlwaysInterleave]`, so chunks within the same silo read eac
 ```
 Browser / curl
     │
-    │  http://localhost:30050
+    │  http://gol.local
     ▼
-Any backend pod (5050)
+Ingress controller
+    │
+    ├── /           → gol-frontend:80
+    ├── /api        → gol-backend:5050
+    ├── /dashboard  → gol-backend:5050
+    └── redisinsight.gol.local/ → redis-insight:5540
+    ▼
+Any backend or support pod
     │  GoLService.RunUniverseStep()
     ▼
 GoLUniverseGrain("universe")   ← always on the same silo

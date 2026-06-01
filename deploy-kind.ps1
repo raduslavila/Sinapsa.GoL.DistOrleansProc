@@ -12,7 +12,7 @@
        - Kind: also checks/creates cluster and loads images with 'kind load'.
        - Docker Desktop: images from 'docker build' are immediately available.
     3. Builds Docker images for the .NET backend and React frontend.
-    4. Applies all Kubernetes manifests (namespace, RBAC, Redis, RedisInsight, backend x4, frontend x1).
+    4. Installs the ingress controller and applies all Kubernetes manifests (namespace, RBAC, Redis, RedisInsight, backend x4, frontend x1, ingress).
     5. Waits for rollouts to complete.
     6. Prints access URLs.
 
@@ -90,7 +90,20 @@ if ($isKind) {
     }
 }
 
-# ── 4. Build Docker images ────────────────────────────────────────────────────
+# ── 4. Install ingress controller ─────────────────────────────────────────────
+if ($isKind) {
+    Write-Step "Installing ingress-nginx controller for Kind"
+    kubectl apply -f "https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml"
+    kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=180s
+    Write-Ok "Ingress controller ready"
+} elseif ($isDockerDesktop) {
+    Write-Step "Installing ingress-nginx controller for Docker Desktop"
+    kubectl apply -f "https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml"
+    kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=180s
+    Write-Ok "Ingress controller ready"
+}
+
+# ── 5. Build Docker images ────────────────────────────────────────────────────
 if (-not $SkipBuild) {
     Write-Step "Building backend image ($BACKEND_IMAGE)"
     docker build -t $BACKEND_IMAGE -f "$ROOT\Sinapsa.GoL.DistOrleansProc\Dockerfile" $ROOT
@@ -103,7 +116,7 @@ if (-not $SkipBuild) {
     Write-Warn "Skipping image build (-SkipBuild)"
 }
 
-# ── 5. Load images into cluster nodes ────────────────────────────────────────
+# ── 6. Load images into cluster nodes ────────────────────────────────────────
 if ($isKind) {
     Write-Step "Loading images into Kind cluster '$KindClusterName'"
     kind load docker-image $BACKEND_IMAGE  --name $KindClusterName
@@ -123,7 +136,7 @@ if ($isKind) {
     Write-Ok "Images loaded into all Docker Desktop nodes"
 }
 
-# ── 6. Apply Kubernetes manifests ─────────────────────────────────────────────
+# ── 7. Apply Kubernetes manifests ─────────────────────────────────────────────
 Write-Step "Applying Kubernetes manifests"
 kubectl apply -f "$ROOT\k8s\crds.yaml"         # Orleans.Clustering.Kubernetes CRDs (cluster-scoped)
 kubectl apply -f "$ROOT\k8s\namespace.yaml"
@@ -132,9 +145,10 @@ kubectl apply -f "$ROOT\k8s\redis.yaml"
 kubectl apply -f "$ROOT\k8s\redis-insight.yaml"
 kubectl apply -f "$ROOT\k8s\backend.yaml"
 kubectl apply -f "$ROOT\k8s\frontend.yaml"
+kubectl apply -f "$ROOT\k8s\ingress.yaml"
 Write-Ok "Manifests applied"
 
-# ── 7. Wait for rollouts ──────────────────────────────────────────────────────
+# ── 8. Wait for rollouts ──────────────────────────────────────────────────────
 Write-Step "Waiting for backend rollout (4 Orleans silo replicas)..."
 kubectl rollout status deployment/gol-backend  -n $NAMESPACE --timeout=180s
 
@@ -148,15 +162,22 @@ Write-Step "Waiting for RedisInsight rollout..."
 kubectl rollout status deployment/redis-insight -n $NAMESPACE --timeout=90s
 
 Write-Ok "All deployments ready"
-# ── 8. Summary ────────────────────────────────────────────────────────────────
+# ── 9. Summary ────────────────────────────────────────────────────────────────
 Write-Host ""
 Write-Host "╔══════════════════════════════════════════════════════════╗" -ForegroundColor Magenta
 Write-Host "║       Game of Life — deployed to local Kubernetes        ║" -ForegroundColor Magenta
 Write-Host "╠══════════════════════════════════════════════════════════╣" -ForegroundColor Magenta
-Write-Host "║  Frontend        http://localhost:30000                  ║" -ForegroundColor Magenta
-Write-Host "║  Backend API     http://localhost:30050/api              ║" -ForegroundColor Magenta
-Write-Host "║  Orleans dash    http://localhost:30050/dashboard        ║" -ForegroundColor Magenta
-Write-Host "║  RedisInsight    http://localhost:30054                  ║" -ForegroundColor Magenta
+if ($isKind -or $isDockerDesktop) {
+    Write-Host "║  Frontend        http://gol.local/                       ║" -ForegroundColor Magenta
+    Write-Host "║  Backend API     http://gol.local/api                    ║" -ForegroundColor Magenta
+    Write-Host "║  Orleans dash    http://gol.local/dashboard              ║" -ForegroundColor Magenta
+    Write-Host "║  RedisInsight    http://redisinsight.gol.local/          ║" -ForegroundColor Magenta
+} else {
+    Write-Host "║  Frontend        http://localhost:30000                  ║" -ForegroundColor Magenta
+    Write-Host "║  Backend API     http://localhost:30050/api              ║" -ForegroundColor Magenta
+    Write-Host "║  Orleans dash    http://localhost:30050/dashboard        ║" -ForegroundColor Magenta
+    Write-Host "║  RedisInsight    http://localhost:30054                  ║" -ForegroundColor Magenta
+}
 Write-Host "╠══════════════════════════════════════════════════════════╣" -ForegroundColor Magenta
 Write-Host "║  backend: 4 Orleans silo replicas | frontend: 1 replica  ║" -ForegroundColor Magenta
 Write-Host "╚══════════════════════════════════════════════════════════╝" -ForegroundColor Magenta
@@ -165,6 +186,7 @@ Write-Host "Useful commands:" -ForegroundColor Yellow
 Write-Host "  kubectl get pods -n gol"
 Write-Host "  kubectl logs -l app=gol-backend  -n gol --tail=50 -f"
 Write-Host "  kubectl logs -l app=gol-frontend -n gol --tail=50"
+Write-Host "  kubectl get ingress -n gol"
 Write-Host ""
 Write-Host "Tear down:"
 Write-Host "  kubectl delete namespace gol                  # removes all resources"

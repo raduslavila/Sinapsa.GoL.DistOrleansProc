@@ -53,14 +53,21 @@ Requires Docker Desktop with Kubernetes enabled (or Kind).
 .\deploy-kind.ps1
 ```
 
-This builds both images, loads them into cluster nodes, applies all manifests, and waits for rollout. Access is via NodePort/Kind host mappings.
+This builds both images, loads them into cluster nodes, applies all manifests, and waits for rollout. On Kind, access is via `gol.local` ingress routes.
+
+For ingress-based access, create a local hosts entry:
+
+```text
+127.0.0.1 gol.local
+127.0.0.1 redisinsight.gol.local
+```
 
 | Service | URL |
 |---------|-----|
-| Frontend | http://localhost:30000 |
-| API | http://localhost:30050/api |
-| Orleans Dashboard | http://localhost:30050/dashboard |
-| RedisInsight | http://localhost:30054 |
+| Frontend | http://gol.local/ |
+| API | http://gol.local/api |
+| Orleans Dashboard | http://gol.local/dashboard |
+| RedisInsight | http://redisinsight.gol.local/ |
 
 See [docs/QUICKSTART_DISTRIBUTED.md](docs/QUICKSTART_DISTRIBUTED.md) for options and re-deploy instructions.
 

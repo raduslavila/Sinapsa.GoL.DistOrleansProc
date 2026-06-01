@@ -1,0 +1,52 @@
+# ── Ingress routes for gol.local ─────────────────────────────────────────────
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gol-web
+  namespace: gol
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: gol.local
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: gol-backend
+                port:
+                  number: 5050
+          - path: /dashboard
+            pathType: Prefix
+            backend:
+              service:
+                name: gol-backend
+                port:
+                  number: 5050
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gol-frontend
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: redis-insight
+  namespace: gol
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: redisinsight.gol.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: redis-insight
+                port:
+                  number: 5540

@@ -86,7 +86,16 @@ HTTP client
 | 11111 | Client gateway (silo ↔ client) |
 | 30000 | Silo-to-silo communication |
 
-The Orleans Dashboard is served by `MapOrleansDashboard()` on the same Kestrel port as the API. In Kubernetes, the backend NodePort exposes both `/api` and `/dashboard` through `http://localhost:30050` via Kind host mappings.
+The Orleans Dashboard is served by `MapOrleansDashboard()` on the same Kestrel port as the API. In Kubernetes, ingress routes both `/api` and `/dashboard` on `http://gol.local` to the backend service.
+
+## Ingress
+
+The local Kind setup installs ingress-nginx and exposes the app at a single host:
+
+- `http://gol.local/` → frontend
+- `http://gol.local/api` → backend API
+- `http://gol.local/dashboard` → Orleans Dashboard
+- `http://redisinsight.gol.local/` → RedisInsight
 
 ## Storage
 

@@ -24,6 +24,7 @@
     <None Include="frontend\gol-visualizer\src\components\GameOfLifeGrid.tsx" />
     <None Include="frontend\gol-visualizer\src\index.css" />
     <None Include="frontend\gol-visualizer\src\services\api.ts" />
+    <None Include="k8s\ingress.yaml" />
     <None Include="k8s\redis-insight.yaml" />
     <None Include="k8s\redis.yaml" />
   </ItemGroup>

@@ -18,9 +18,9 @@ The script:
 1. Detects whether the active `kubectl` context is Docker Desktop or Kind.
 2. Builds the backend (`gol-backend:local`) and frontend (`gol-frontend:local`) Docker images.
 3. Loads images into every cluster node (Docker Desktop multi-node: imports via `ctr`; Kind: uses `kind load`).
-4. Applies all manifests in `k8s/` (CRDs, namespace, RBAC, Redis, RedisInsight, backend deployment, frontend deployment).
+4. Installs the ingress-nginx controller on Kind and applies all manifests in `k8s/` (CRDs, namespace, RBAC, Redis, RedisInsight, backend deployment, frontend deployment, ingress).
 5. Waits for rollouts to complete.
-6. Uses NodePort/Kind host mappings for local access.
+6. Uses `gol.local` ingress routes for local access.
 
 ### Script parameters
 
@@ -35,10 +35,11 @@ After the script completes:
 
 | Service | URL |
 |---------|-----|
-| Frontend | http://localhost:30000 |
-| Backend API | http://localhost:30050/api |
-| Swagger UI | http://localhost:30050/swagger |
-| Orleans Dashboard | http://localhost:30050/dashboard |
+| Frontend | http://gol.local/ |
+| Backend API | http://gol.local/api |
+| Swagger UI | http://gol.local/swagger |
+| Orleans Dashboard | http://gol.local/dashboard |
+| RedisInsight | http://redisinsight.gol.local/ |
 
 ## Verify the cluster
 
@@ -47,11 +48,11 @@ kubectl get pods -n gol
 # All 5 pods (4 backend + 1 frontend) should be Running
 
 # Health check
-Invoke-RestMethod http://localhost:30050/hc
+Invoke-RestMethod http://gol.local/hc
 
 # Initialize and step
-Invoke-RestMethod -Uri "http://localhost:30050/api/init?chunksX=2&chunksY=2&chunkSize=32" -Method POST
-Invoke-RestMethod -Uri "http://localhost:30050/api/step" -Method POST
+Invoke-RestMethod -Uri "http://gol.local/api/init?chunksX=2&chunksY=2&chunkSize=32" -Method POST
+Invoke-RestMethod -Uri "http://gol.local/api/step" -Method POST
 ```
 
 ## Re-deploying after a code change
@@ -82,10 +83,12 @@ kubectl rollout status deployment/gol-backend  -n gol --timeout=180s
 | `redis-insight.yaml` | RedisInsight Deployment + NodePort Service (`30054`) |
 | `backend.yaml` | 4-replica `gol-backend` Deployment + NodePort Service (`gol-backend-external`, port 30050→5050) |
 | `frontend.yaml` | 1-replica `gol-frontend` Deployment + NodePort Service (`gol-frontend`, port 30000→80) |
+| `ingress.yaml` | Ingress routes for `gol.local` frontend/API/dashboard/RedisInsight |
 
 ## Notes
 
-- NodePort services are exposed on `localhost` through the Kind host mappings in `kind-config.yaml`.
+- Add `127.0.0.1 gol.local` and `127.0.0.1 redisinsight.gol.local` to your hosts file so the ingress hosts resolve locally.
+- Ingress is exposed through port 80/443 on the Kind cluster via `kind-config.yaml` and the ingress-nginx controller.
 - `ClusterId` must be lowercase (`k8s-gol`) to satisfy RFC 1123 / Kubernetes CRD naming rules.
 - `imagePullPolicy: IfNotPresent` — a rebuilt image must be explicitly loaded into each node before a rollout picks it up.
-- The Orleans Dashboard (`/dashboard`) is served by the backend pods on the same 5050 NodePort as the API.
+- The Orleans Dashboard (`/dashboard`) is served by the backend pods and routed through ingress on `gol.local`.
