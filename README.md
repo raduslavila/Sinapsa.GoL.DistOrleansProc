@@ -59,7 +59,8 @@ This builds both images, loads them into cluster nodes, applies all manifests, w
 |---------|-----|
 | Frontend | http://localhost:30000 |
 | API | http://localhost:30050/api |
-| Orleans Dashboard | http://localhost:30050/dashboard |
+| Orleans Dashboard | http://localhost:30051/dashboard |
+| RedisInsight | http://localhost:30054 |
 
 See [docs/QUICKSTART_DISTRIBUTED.md](docs/QUICKSTART_DISTRIBUTED.md) for options and re-deploy instructions.
 

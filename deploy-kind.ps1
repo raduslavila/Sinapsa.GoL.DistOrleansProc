@@ -12,7 +12,7 @@
        - Kind: also checks/creates cluster and loads images with 'kind load'.
        - Docker Desktop: images from 'docker build' are immediately available.
     3. Builds Docker images for the .NET backend and React frontend.
-    4. Applies all Kubernetes manifests (namespace, RBAC, backend x4, frontend x1).
+    4. Applies all Kubernetes manifests (namespace, RBAC, Redis, RedisInsight, backend x4, dashboard x1, frontend x1).
     5. Waits for rollouts to complete.
     6. On non-Docker-Desktop clusters starts kubectl port-forward background jobs.
     7. Prints access URLs.
@@ -130,7 +130,10 @@ Write-Step "Applying Kubernetes manifests"
 kubectl apply -f "$ROOT\k8s\crds.yaml"         # Orleans.Clustering.Kubernetes CRDs (cluster-scoped)
 kubectl apply -f "$ROOT\k8s\namespace.yaml"
 kubectl apply -f "$ROOT\k8s\rbac.yaml"
+kubectl apply -f "$ROOT\k8s\redis.yaml"
+kubectl apply -f "$ROOT\k8s\redis-insight.yaml"
 kubectl apply -f "$ROOT\k8s\backend.yaml"
+kubectl apply -f "$ROOT\k8s\dashboard.yaml"
 kubectl apply -f "$ROOT\k8s\frontend.yaml"
 Write-Ok "Manifests applied"
 
@@ -138,29 +141,49 @@ Write-Ok "Manifests applied"
 Write-Step "Waiting for backend rollout (4 Orleans silo replicas)..."
 kubectl rollout status deployment/gol-backend  -n $NAMESPACE --timeout=180s
 
+Write-Step "Waiting for dashboard rollout..."
+kubectl rollout status deployment/gol-dashboard -n $NAMESPACE --timeout=180s
+
 Write-Step "Waiting for frontend rollout..."
 kubectl rollout status deployment/gol-frontend -n $NAMESPACE --timeout=90s
+
+Write-Step "Waiting for Redis rollout..."
+kubectl rollout status deployment/redis -n $NAMESPACE --timeout=90s
+
+Write-Step "Waiting for RedisInsight rollout..."
+kubectl rollout status deployment/redis-insight -n $NAMESPACE --timeout=90s
 
 Write-Ok "All deployments ready"
 
 # ── 8. Port-forward background jobs ──────────────────────────────────────────
-# NodePort services are not reachable on localhost for multi-node Docker Desktop
-# or for Kind without extraPortMappings. Always use port-forward.
-if (-not $ForcePortForward) {
-    Write-Step "Starting port-forward background jobs"
+# Kind exposes the NodePorts via kind-config.yaml, so the local URLs stay stable
+# even if a backend pod is deleted and rescheduled. Use port-forward only for
+# Docker Desktop / generic clusters unless explicitly forced.
+if ($isKind -and -not $ForcePortForward) {
+    Write-Step "Skipping port-forward jobs for Kind (NodePort host mappings are active)"
 } else {
-    Write-Step "Starting port-forward background jobs (-ForcePortForward)"
-}
-Get-Job -Name "gol-pf-*" -ErrorAction SilentlyContinue | Remove-Job -Force
+    if (-not $ForcePortForward) {
+        Write-Step "Starting port-forward background jobs"
+    } else {
+        Write-Step "Starting port-forward background jobs (-ForcePortForward)"
+    }
+    Get-Job -Name "gol-pf-*" -ErrorAction SilentlyContinue | Remove-Job -Force
 
-$null = Start-Job -Name "gol-pf-frontend" -ScriptBlock {
-    kubectl port-forward svc/gol-frontend 30000:80 -n gol 2>&1
+    $null = Start-Job -Name "gol-pf-frontend" -ScriptBlock {
+        kubectl port-forward svc/gol-frontend 30000:80 -n gol 2>&1
+    }
+    $null = Start-Job -Name "gol-pf-backend" -ScriptBlock {
+        kubectl port-forward svc/gol-backend-external 30050:5050 -n gol 2>&1
+    }
+    $null = Start-Job -Name "gol-pf-dashboard" -ScriptBlock {
+        kubectl port-forward svc/gol-dashboard 30051:5050 -n gol 2>&1
+    }
+    $null = Start-Job -Name "gol-pf-redis-insight" -ScriptBlock {
+        kubectl port-forward svc/redis-insight 30054:5540 -n gol 2>&1
+    }
+    Start-Sleep -Seconds 3
+    Write-Ok "Port-forward jobs started ('Get-Job' to inspect, 'Stop-Job gol-pf-*' to stop)"
 }
-$null = Start-Job -Name "gol-pf-backend" -ScriptBlock {
-    kubectl port-forward svc/gol-backend-external 30050:5050 -n gol 2>&1
-}
-Start-Sleep -Seconds 3
-Write-Ok "Port-forward jobs started ('Get-Job' to inspect, 'Stop-Job gol-pf-*' to stop)"
 
 # ── 9. Summary ────────────────────────────────────────────────────────────────
 Write-Host ""
@@ -169,7 +192,8 @@ Write-Host "║       Game of Life — deployed to local Kubernetes        ║" 
 Write-Host "╠══════════════════════════════════════════════════════════╣" -ForegroundColor Magenta
 Write-Host "║  Frontend        http://localhost:30000                  ║" -ForegroundColor Magenta
 Write-Host "║  Backend API     http://localhost:30050/api              ║" -ForegroundColor Magenta
-Write-Host "║  Orleans dash    http://localhost:30050/dashboard        ║" -ForegroundColor Magenta
+Write-Host "║  Orleans dash    http://localhost:30051/dashboard        ║" -ForegroundColor Magenta
+Write-Host "║  RedisInsight    http://localhost:30054                  ║" -ForegroundColor Magenta
 Write-Host "╠══════════════════════════════════════════════════════════╣" -ForegroundColor Magenta
 Write-Host "║  backend: 4 Orleans silo replicas | frontend: 1 replica  ║" -ForegroundColor Magenta
 Write-Host "╚══════════════════════════════════════════════════════════╝" -ForegroundColor Magenta

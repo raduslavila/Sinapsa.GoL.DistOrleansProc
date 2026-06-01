@@ -1,24 +1,30 @@
-# ── Orleans Silo Deployment (4 replicas) ────────────────────────────────────
+# ── Dedicated Orleans Dashboard Silo ────────────────────────────────────────
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gol-backend
+  name: gol-dashboard
   namespace: gol
   labels:
-    app: gol-backend
+    app: gol-dashboard
 spec:
-  replicas: 4
+  replicas: 1
   selector:
     matchLabels:
-      app: gol-backend
+      app: gol-dashboard
   template:
     metadata:
       labels:
-        app: gol-backend
+        app: gol-dashboard
     spec:
       serviceAccountName: gol-backend-sa
       terminationGracePeriodSeconds: 60
       initContainers:
+        - name: wait-for-backend-membership
+          image: bitnami/kubectl:latest
+          command:
+            - sh
+            - -c
+            - kubectl wait --for=condition=Ready pod -l app=gol-backend -n gol --timeout=180s
         - name: wait-for-redis
           image: redis:7-alpine
           command:
@@ -26,7 +32,7 @@ spec:
             - -c
             - until redis-cli -h redis -p 6379 ping; do echo 'waiting for redis'; sleep 2; done
       containers:
-        - name: gol-backend
+        - name: gol-dashboard
           image: gol-backend:local
           imagePullPolicy: IfNotPresent
           ports:
@@ -37,7 +43,6 @@ spec:
             - containerPort: 30000
               name: gateway
           env:
-            # --- Pod identity (required by Orleans.Hosting.Kubernetes) ---
             - name: POD_NAME
               valueFrom:
                 fieldRef:
@@ -50,18 +55,16 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            # --- Orleans cluster identity (bound into ClusterConfig.ClusterOptions via config) ---
             - name: ClusterConfig__ClusterOptions__ClusterId
               value: "k8s-gol"
             - name: ClusterConfig__ClusterOptions__ServiceId
               value: "k8s-gol-one"
-            # --- Application config overrides (double-underscore = nested JSON) ---
             - name: ClusterConfig__UseLocalhost
               value: "false"
             - name: ClusterConfig__UseKubernetesHosting
               value: "true"
             - name: ClusterConfig__UseDashboard
-              value: "false"
+              value: "true"
             - name: ClusterConfig__DashboardPort
               value: "8000"
             - name: ClusterConfig__DashboardPath
@@ -74,10 +77,10 @@ spec:
               value: "Production"
           resources:
             limits:
-              cpu: 500m
-              memory: 512Mi
+              cpu: 250m
+              memory: 256Mi
             requests:
-              cpu: 50m
+              cpu: 25m
               memory: 128Mi
           startupProbe:
             httpGet:
@@ -102,38 +105,30 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 3
 ---
-# Internal ClusterIP — used by the frontend nginx proxy and inter-silo comms
 apiVersion: v1
 kind: Service
 metadata:
-  name: gol-backend
+  name: gol-dashboard
   namespace: gol
 spec:
   selector:
-    app: gol-backend
+    app: gol-dashboard
   ports:
     - name: http
       port: 5050
       targetPort: 5050
-    - name: silo
-      port: 11111
-      targetPort: 11111
-    - name: gateway
-      port: 30000
-      targetPort: 30000
 ---
-# NodePort — exposes the API outside the cluster
 apiVersion: v1
 kind: Service
 metadata:
-  name: gol-backend-external
+  name: gol-dashboard-external
   namespace: gol
 spec:
   type: NodePort
   selector:
-    app: gol-backend
+    app: gol-dashboard
   ports:
     - name: http
       port: 5050
       targetPort: 5050
-      nodePort: 30050
+      nodePort: 30051
