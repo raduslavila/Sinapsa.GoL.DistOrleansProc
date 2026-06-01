@@ -7,9 +7,7 @@ using System.Diagnostics;
 
 namespace Sinapsa.GoL.DistOrleansProc.Grains
 {
-    // TODO: Add Redis persistence support for distributed state management
-    // Consider using [StorageProvider(ProviderName = "RedisGrainStorage")] when migrating to Redis
-    [StorageProvider(ProviderName = "ChunkMemory")]
+    [StorageProvider(ProviderName = "GoLChunkStore")]
     [ActivationCountBasedPlacement]
     public class GoLChunkGrain : Grain<GoLChunkGrainState>, IGoLChunkGrain
     {

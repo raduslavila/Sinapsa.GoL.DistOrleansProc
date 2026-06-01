@@ -10,6 +10,7 @@ using Orleans.Providers;
 using Orleans.Runtime;
 using Sinapsa.GoL.DistOrleansProc.Domain.Configuration;
 using Sinapsa.GoL.DistOrleansProc.GrainInterfaces;
+using StackExchange.Redis;
 using System.Net;
 using System.Reflection;
 
@@ -131,6 +132,56 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Extensions
             {
                 siloBuilder.AddMemoryGrainStorage(requiredProvider);
             }
+            return siloBuilder;
+        }
+
+        public static ISiloBuilder ConfigureGrainStorageFromConfiguration(this ISiloBuilder siloBuilder, IConfiguration configuration, params Assembly[] assemblies)
+        {
+            var options = new GrainStorageOptions();
+            configuration.GetSection(GrainStorageOptions.SectionName).Bind(options);
+
+            var requiredProviders = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "PubSubStore" };
+            foreach (Type type in assemblies.SelectMany(q => q.GetTypes()).Where(q => typeof(Grain).IsAssignableFrom(q)))
+            {
+                var storageProvider = type.GetCustomAttribute<StorageProviderAttribute>(true);
+                if (storageProvider != null)
+                {
+                    requiredProviders.Add(storageProvider.ProviderName);
+                }
+
+                var ctors = type.GetConstructors();
+                if (ctors.Length == 1)
+                {
+                    var ctor = ctors[0];
+                    foreach (var arg in ctor.GetParameters())
+                    {
+                        var persistantState = arg.GetCustomAttribute<PersistentStateAttribute>(true);
+                        if (persistantState != null)
+                        {
+                            requiredProviders.Add(persistantState.StorageName);
+                        }
+                    }
+                }
+            }
+
+            foreach (var providerName in requiredProviders)
+            {
+                options.Providers.TryGetValue(providerName, out var providerOptions);
+                providerOptions ??= new GrainStorageProviderOptions();
+
+                if (providerOptions.ProviderKind == GrainStorageProviderKind.Redis)
+                {
+                    siloBuilder.AddRedisGrainStorage(providerName, redisOptions =>
+                    {
+                        redisOptions.ConfigurationOptions = ConfigurationOptions.Parse(providerOptions.RedisConnectionString ?? configuration.GetConnectionString("redis") ?? "redis:6379,abortConnect=false");
+                    });
+                }
+                else
+                {
+                    siloBuilder.AddMemoryGrainStorage(providerName);
+                }
+            }
+
             return siloBuilder;
         }
 

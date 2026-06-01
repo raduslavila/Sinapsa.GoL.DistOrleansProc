@@ -22,6 +22,8 @@ namespace Sinapsa.GoL.DistOrleansProc.Domain.Services
         private IGoLUniverseGrain Universe =>
             _grainFactory.GetGrain<IGoLUniverseGrain>("universe");
 
+        public Task<bool> IsUniverseInitialized() => Universe.IsInitialized();
+
         public Task InitUniverse(int chunksX, int chunksY, int chunkSize, double liveDensity) =>
             Universe.InitUniverse(chunksX, chunksY, chunkSize, liveDensity);
 

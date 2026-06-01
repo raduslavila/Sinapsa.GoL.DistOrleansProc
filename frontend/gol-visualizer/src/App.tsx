@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import './App.css';
 import GameOfLifeGrid from './components/GameOfLifeGrid';
 import ControlPanel from './components/ControlPanel';
-import { getGridUpdate, initUniverse, reinitUniverse, runStep, UniverseGridUpdateDto } from './services/api';
+import { getGridUpdate, getUniverseStatus, initUniverse, reinitUniverse, runStep, UniverseGridUpdateDto } from './services/api';
 
 interface UniverseConfig {
   chunksX: number;
@@ -51,9 +51,30 @@ function App() {
     setGeneration(update.currentGeneration);
   }, [grid.length]);
 
+  const loadExistingUniverse = useCallback(async () => {
+    try {
+      const status = await getUniverseStatus();
+      if (status.isInitialized && status.grid?.cells) {
+        applyUpdate({
+          currentGeneration: 0,
+          isFullGrid: true,
+          grid: status.grid,
+          deltas: []
+        });
+        setIsInitialized(true);
+      }
+    } catch (error) {
+      console.error('Failed to load existing universe:', error);
+    }
+  }, [applyUpdate]);
+
   useEffect(() => {
     generationRef.current = generation;
   }, [generation]);
+
+  useEffect(() => {
+    void loadExistingUniverse();
+  }, [loadExistingUniverse]);
 
   const clearAutoRunTimeout = useCallback(() => {
     if (autoRunTimeoutRef.current) {

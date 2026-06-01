@@ -12,7 +12,7 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
     /// generation counter, and grid snapshots — fixing the multi-silo inconsistency that
     /// existed when GoLService (a per-silo DI singleton) held that state.
     /// </summary>
-    [StorageProvider(ProviderName = "ChunkMemory")]
+    [StorageProvider(ProviderName = "GoLUniverseStore")]
     public class GoLUniverseGrain : Grain<GoLUniverseGrainState>, IGoLUniverseGrain
     {
         // Grid snapshots are large; we keep them in grain-activation memory only.
@@ -22,6 +22,11 @@ namespace Sinapsa.GoL.DistOrleansProc.Grains
         private bool[][]? _previousGrid;
 
         // ── Public API ────────────────────────────────────────────────────────────
+
+        public Task<bool> IsInitialized()
+        {
+            return Task.FromResult(State.IsInitialized);
+        }
 
         public async Task InitUniverse(int chunksX, int chunksY, int chunkSize, double liveDensity)
         {

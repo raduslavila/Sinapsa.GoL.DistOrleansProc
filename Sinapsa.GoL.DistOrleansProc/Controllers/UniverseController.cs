@@ -101,6 +101,27 @@ namespace Sinapsa.GoL.DistOrleansProc.Controllers
         }
 
         /// <summary>
+        /// Check whether a persisted universe already exists.
+        /// </summary>
+        [HttpGet("status")]
+        public async Task<IActionResult> GetStatus()
+        {
+            var isInitialized = await _goLService.IsUniverseInitialized();
+
+            if (!isInitialized)
+            {
+                return Ok(new { isInitialized = false });
+            }
+
+            var grid = await _goLService.GetUniverseGrid();
+            return Ok(new
+            {
+                isInitialized = true,
+                grid
+            });
+        }
+
+        /// <summary>
         /// Get the current state of the universe as a structured grid (for frontend visualization)
         /// Returns a GridStateDto with width, height, and a 2D jagged array of cells
         /// </summary>

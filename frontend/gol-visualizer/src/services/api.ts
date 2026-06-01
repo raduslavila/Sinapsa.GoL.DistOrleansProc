@@ -19,6 +19,11 @@ export interface UniverseGridUpdateDto {
   deltas: UniverseGridCellDeltaDto[];
 }
 
+export interface UniverseStatusDto {
+  isInitialized: boolean;
+  grid?: GridStateDto | null;
+}
+
 export const initUniverse = async (
   chunksX: number,
   chunksY: number,
@@ -32,6 +37,20 @@ export const initUniverse = async (
 
   if (!response.ok) {
     throw new Error('Failed to initialize universe');
+  }
+
+  return response.json();
+};
+
+export const loadUniverseGrid = async (): Promise<UniverseGridUpdateDto> => {
+  return getGridUpdate(-1);
+};
+
+export const getUniverseStatus = async (): Promise<UniverseStatusDto> => {
+  const response = await fetch(`${API_BASE_URL}/status`);
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch universe status');
   }
 
   return response.json();

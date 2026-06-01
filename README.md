@@ -40,6 +40,10 @@ docker compose up --build
 | Frontend | http://localhost:3000 |
 | API | http://localhost:5050/api |
 | Orleans Dashboard | http://localhost:5050/dashboard |
+| Redis | `redis:6379` |
+| RedisInsight | http://localhost:5540 |
+
+Redis is used as the Orleans persistence store. RedisInsight is preconfigured to connect to the `redis` service in the compose stack.
 
 ### Kubernetes (multi-silo)
 
@@ -90,9 +94,24 @@ Swagger UI: `http://localhost:5050/swagger` (development only)
       "SiloPort": 30000,
       "GatewayPort": 11111
     }
+  },
+  "GrainStorageOptions": {
+    "Providers": {
+      "PubSubStore": {
+        "ProviderKind": "Memory"
+      },
+      "GoLUniverseStore": {
+        "ProviderKind": "Memory"
+      },
+      "GoLChunkStore": {
+        "ProviderKind": "Memory"
+      }
+    }
   }
 }
 ```
+
+To use Redis-backed grain storage, change the provider kind for `GoLUniverseStore` and/or `GoLChunkStore` to `Redis` and set `RedisConnectionString` if needed. The Docker Compose setup provides `redis:6379` by default.
 
 For Kubernetes, `UseKubernetesHosting: true` is set via environment variables in `k8s/backend.yaml`. Orleans uses CRD-based cluster membership (`Orleans.Clustering.Kubernetes`).
 
@@ -128,7 +147,7 @@ deploy-kind.ps1                      # One-command local K8s deploy
 
 ## Stack
 
-.NET 9 · ASP.NET Core 9 · Orleans 10.1 · Orleans.Clustering.Kubernetes 10.0.1 · Orleans Dashboard · React 19 · TypeScript
+.NET 9 · ASP.NET Core 9 · Orleans 10.1 · Orleans.Clustering.Kubernetes 10.0.1 · Orleans Dashboard · Redis · RedisInsight · React 19 · TypeScript
 
 ## License
 

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Sinapsa.GoL.DistOrleansProc.Domain.Extensions;
 using Sinapsa.GoL.DistOrleansProc.Grains;
+using StackExchange.Redis;
 
 namespace Sinapsa.GoL.DistOrleansProc
 {
@@ -21,8 +22,7 @@ namespace Sinapsa.GoL.DistOrleansProc
                     var config = context.Configuration;
 
                     siloBuilder.ConfigureCluster(config);
-
-                    siloBuilder.ConfigureMemoryGrainStorage(typeof(GoLChunkGrain).Assembly);
+                    siloBuilder.ConfigureGrainStorageFromConfiguration(config, typeof(Program).Assembly, typeof(GoLChunkGrain).Assembly);
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

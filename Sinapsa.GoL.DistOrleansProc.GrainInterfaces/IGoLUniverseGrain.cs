@@ -14,6 +14,8 @@ namespace Sinapsa.GoL.DistOrleansProc.GrainInterfaces
     [Alias("Sinapsa.GoL.DistOrleansProc.GrainInterfaces.IGoLUniverseGrain")]
     public interface IGoLUniverseGrain : IGrainWithStringKey, IGrain<string>
     {
+        Task<bool> IsInitialized();
+
         Task InitUniverse(int chunksX, int chunksY, int chunkSize, double liveDensity);
 
         Task ClearAndReinitUniverse(int chunksX, int chunksY, int chunkSize, double liveDensity);

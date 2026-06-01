@@ -1,4 +1,18 @@
 services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+  
+  redis-insight:
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    environment:
+      RI_REDIS_HOSTS: 'redis'
+    depends_on:
+      - redis
+
   gol-backend:
     image: ${DOCKER_REGISTRY-}gol-backend
     build:
@@ -6,6 +20,10 @@ services:
       dockerfile: Sinapsa.GoL.DistOrleansProc/Dockerfile
     ports:
       - "5050:5050"
+    environment:
+      ConnectionStrings__redis: redis:6379,abortConnect=false
+    depends_on:
+      - redis
     deploy:
       resources:
         limits:
